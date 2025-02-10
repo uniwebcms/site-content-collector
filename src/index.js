@@ -141,7 +141,13 @@ async function collectSiteContent(rootPath) {
     errors: [],
   };
 
-  const entries = await readdir(rootPath);
+  let entries;
+  try {
+    entries = await readdir(rootPath);
+  } catch (err) {
+    if (err.code === "ENOENT") return output;
+    throw err;
+  }
   const dirStats = await Promise.all(
     entries.map(async (entry) => {
       const path = join(rootPath, entry);
