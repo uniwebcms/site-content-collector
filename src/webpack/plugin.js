@@ -33,28 +33,44 @@ class SiteContentPlugin {
       }
     );
 
-    // Add content to compilation assets
-    compiler.hooks.emit.tapAsync(pluginName, (compilation, callback) => {
-      if (this.injectToHtml) {
-        // Hook into HTML plugin if available
-        const hooks = compilation.hooks.htmlWebpackPluginBeforeHtmlProcessing;
+    // Register the HTML modification hook
+    if (this.injectToHtml) {
+      compiler.hooks.compilation.tap(pluginName, (compilation) => {
+        // Ensure we have access to the html-webpack-plugin hooks
+        const hooks = compiler.options.plugins
+          .find((plugin) => plugin.constructor.name === "HtmlWebpackPlugin")
+          ?.constructor.getHooks(compilation);
+
         if (hooks) {
-          hooks.tapAsync(pluginName, (data, cb) => {
+          console.log("[SiteContentPlugin] Found HtmlWebpackPlugin hooks");
+          hooks.beforeEmit.tapAsync(pluginName, (data, cb) => {
+            console.log("[SiteContentPlugin] Injecting into HTML");
             const script = `<script>window.${
               this.variableName
-            } = ${JSON.stringify(this.siteContent)}</script>`;
+            } = ${JSON.stringify(this.siteContent)};</script>`;
             data.html = data.html.replace("</head>", script + "</head>");
             cb(null, data);
           });
+        } else {
+          console.warn("[SiteContentPlugin] HtmlWebpackPlugin hooks not found");
         }
-      } else {
-        // Output as JSON file
-        compilation.assets[this.filename] = {
-          source: () => JSON.stringify(this.siteContent, null, 2),
-          size: () => JSON.stringify(this.siteContent).length,
-        };
-      }
-      callback();
+      });
+    }
+
+    // Add JSON file
+    compiler.hooks.compilation.tap(pluginName, (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: pluginName,
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+        },
+        (assets) => {
+          assets[this.filename] = {
+            source: () => JSON.stringify(this.siteContent, null, 2),
+            size: () => JSON.stringify(this.siteContent).length,
+          };
+        }
+      );
     });
 
     // Watch mode setup
@@ -63,8 +79,7 @@ class SiteContentPlugin {
         if (!this.watching) {
           this.watching = true;
           const sourcePath = resolve(compiler.context, this.sourcePath);
-
-          watch(sourcePath, { recursive: true }, (eventType, filename) => {
+          watch(sourcePath, { recursive: true }, () => {
             if (compiler.watching) {
               compiler.watching.invalidate();
             }
