@@ -8,7 +8,7 @@ A Node.js library that processes website content from a structured folder hierar
 npm install @uniwebcms/site-content-collector
 ```
 
-## Usage
+## Usage Methods
 
 This library can be used in three ways:
 
@@ -57,30 +57,63 @@ The CLI enforces these rules for safety:
 
 ### Webpack Plugin
 
-The library includes a webpack plugin for integrating content collection into your build process:
+The webpack plugin integrates content collection into your build process:
 
 ```javascript
 const SiteContentPlugin = require("@uniwebcms/site-content-collector/webpack");
 
 module.exports = {
-  // ... other webpack config
   plugins: [
     new SiteContentPlugin({
       sourcePath: "./content/pages", // Required: path to content directory
       injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
-      variableName: "__SITE_CONTENT__", // Optional: global variable name when injecting
-      filename: "site-content.json", // Optional: output filename when not injecting
+      variableName: "__SITE_CONTENT__", // Optional: id/variable name when injecting
+      filename: "site-content.json", // Optional: output filename
+      injectFormat: "json", // Optional: injection format ('json' or 'script')
     }),
   ],
 };
 ```
 
-Plugin features:
+#### HTML Injection Formats
 
-- Automatically processes content during build
-- Supports watch mode in development
-- Can inject content directly into HTML or output as JSON file
-- Works with html-webpack-plugin for HTML injection
+The plugin supports two formats for injecting content into HTML:
+
+1. JSON format (default):
+
+```html
+<script type="application/json" id="__SITE_CONTENT__">
+  {
+    "pages": {
+      /* content */
+    }
+  }
+</script>
+```
+
+Access in your code:
+
+```javascript
+const content = JSON.parse(
+  document.getElementById("__SITE_CONTENT__").textContent
+);
+```
+
+2. Script format:
+
+```html
+<script>
+  window.__SITE_CONTENT__ = {
+    /* content */
+  };
+</script>
+```
+
+Access in your code:
+
+```javascript
+const content = window.__SITE_CONTENT__;
+```
 
 ## Content Structure
 
@@ -127,7 +160,7 @@ Content in Markdown format
   },
   "content": {
     "type": "doc",
-    "content": []        # ProseMirror/TipTap format
+    "content": [] // ProseMirror/TipTap format
   }
 }
 ```
