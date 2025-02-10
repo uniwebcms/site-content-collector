@@ -3,13 +3,17 @@
   "version": "1.0.3",
   "description": "Collect and process website content from a folder structure",
   "main": "src/index.js",
+  "bin": {
+    "collect-content": "./bin/collect-content.js"
+  },
   "scripts": {
     "test": "jest",
     "test-report": "jest --json > test-results.json 2>&1"
   },
   "dependencies": {
     "@uniwebcms/content-reader": "^1.0.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "commander": "^11.1.0"
   },
   "devDependencies": {
     "jest": "^29.7.0"
@@ -32,10 +36,7 @@
     "collector",
     "markdown",
     "yaml",
-    "prosemirror"
-  ],
-  "homepage": "https://github.com/uniwebcms/site-content-collector#readme",
-  "directories": {
-    "test": "tests"
-  }
+    "prosemirror",
+    "cli"
+  ]
 }
