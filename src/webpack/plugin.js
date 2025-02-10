@@ -13,7 +13,21 @@ class SiteContentPlugin {
     this.injectToHtml = options.injectToHtml ?? false;
     this.variableName = options.variableName ?? "__SITE_CONTENT__";
     this.filename = options.filename ?? "site-content.json";
+    this.injectFormat = options.injectFormat ?? "json"; // 'script' or 'json'
     this.watching = false;
+  }
+
+  getInjectionContent() {
+    if (this.injectFormat === "json") {
+      return `<script type="application/json" id="${
+        this.variableName
+      }">${JSON.stringify(this.siteContent)}</script>\n`;
+    }
+
+    // Default script format
+    return `<script>window.${this.variableName} = ${JSON.stringify(
+      this.siteContent
+    )};</script>`;
   }
 
   apply(compiler) {
@@ -36,23 +50,24 @@ class SiteContentPlugin {
     // Register the HTML modification hook
     if (this.injectToHtml) {
       compiler.hooks.compilation.tap(pluginName, (compilation) => {
-        // Ensure we have access to the html-webpack-plugin hooks
+        // Find HtmlWebpackPlugin instance
         const hooks = compiler.options.plugins
           .find((plugin) => plugin.constructor.name === "HtmlWebpackPlugin")
           ?.constructor.getHooks(compilation);
 
         if (hooks) {
-          console.log("[SiteContentPlugin] Found HtmlWebpackPlugin hooks");
           hooks.beforeEmit.tapAsync(pluginName, (data, cb) => {
-            console.log("[SiteContentPlugin] Injecting into HTML");
-            const script = `<script>window.${
-              this.variableName
-            } = ${JSON.stringify(this.siteContent)};</script>`;
-            data.html = data.html.replace("</head>", script + "</head>");
+            const injectionContent = this.getInjectionContent();
+            data.html = data.html.replace(
+              "</head>",
+              injectionContent + "</head>"
+            );
             cb(null, data);
           });
         } else {
-          console.warn("[SiteContentPlugin] HtmlWebpackPlugin hooks not found");
+          console.warn(
+            "[SiteContentPlugin] HtmlWebpackPlugin not found - HTML injection disabled"
+          );
         }
       });
     }
