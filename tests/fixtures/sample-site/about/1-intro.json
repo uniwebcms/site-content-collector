@@ -1,0 +1,20 @@
+{
+  "component": "Intro",
+  "props": {
+    "style": "centered"
+  },
+  "content": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "About our company"
+          }
+        ]
+      }
+    ]
+  }
+}
