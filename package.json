@@ -3,6 +3,10 @@
   "version": "1.1.1",
   "description": "Collect and process website content from a folder structure",
   "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./webpack": "./src/webpack/plugin.js"
+  },
   "bin": {
     "collect-content": "./bin/collect-content.js"
   },
@@ -16,7 +20,8 @@
     "commander": "^11.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "webpack": "^5.97.1"
   },
   "engines": {
     "node": ">=14.0.0"

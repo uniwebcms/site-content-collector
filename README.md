@@ -10,9 +10,13 @@ npm install @uniwebcms/site-content-collector
 
 ## Usage
 
-You can use this library either programmatically or through its CLI interface.
+This library can be used in three ways:
 
-### Programmatic Usage
+1. As a Node.js module
+2. As a CLI tool
+3. As a webpack plugin
+
+### Node.js Module
 
 ```javascript
 const { collectSiteContent } = require("@uniwebcms/site-content-collector");
@@ -27,7 +31,7 @@ async function processWebsite() {
 }
 ```
 
-### Command Line Interface
+### CLI Tool
 
 Process content directly from the command line using `npx`:
 
@@ -51,59 +55,67 @@ The CLI enforces these rules for safety:
 - When specifying a file, it must have a `.json` extension
 - Creates output directories if they don't exist
 
-# With pretty-printed JSON output
+### Webpack Plugin
 
-collect-content ./source-dir ./output-dir --pretty
+The library includes a webpack plugin for integrating content collection into your build process:
 
-# With verbose logging
+```javascript
+const SiteContentPlugin = require("@uniwebcms/site-content-collector/webpack");
 
-collect-content ./source-dir ./output-dir --verbose
-
-# Show help
-
-collect-content --help
-
+module.exports = {
+  // ... other webpack config
+  plugins: [
+    new SiteContentPlugin({
+      sourcePath: "./content/pages", // Required: path to content directory
+      injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
+      variableName: "__SITE_CONTENT__", // Optional: global variable name when injecting
+      filename: "site-content.json", // Optional: output filename when not injecting
+    }),
+  ],
+};
 ```
 
-The CLI will:
-1. Process all content from the source directory
-2. Create the target directory if it doesn't exist
-3. Save the processed content as `site-content.json`
-4. Show any errors or warnings when using --verbose
+Plugin features:
+
+- Automatically processes content during build
+- Supports watch mode in development
+- Can inject content directly into HTML or output as JSON file
+- Works with html-webpack-plugin for HTML injection
 
 ## Content Structure
 
 The library expects a folder structure organized as follows:
 
 ```
-
 website/
-├── site.yml # Site-wide metadata and settings
-├── home/ # Each folder is a page
-│ ├── page.yml # Page-specific metadata
-│ ├── 1-hero.md # Section with prefix "1"
-│ ├── 2-features.md # Section with prefix "2"
-│ └── 2.1-feature.md # Subsection of "2"
+├── site.yml               # Site-wide metadata and settings
+├── home/                  # Each folder is a page
+│   ├── page.yml          # Page-specific metadata
+│   ├── 1-hero.md         # Section with prefix "1"
+│   ├── 2-features.md     # Section with prefix "2"
+│   └── 2.1-feature.md    # Subsection of "2"
 └── about/
-├── page.yml
-└── 1-intro.json # JSON sections are also supported
-
-````
+    ├── page.yml
+    └── 1-intro.json      # JSON sections are also supported
+```
 
 ### Content Files
 
 The library processes two types of content files:
 
 #### Markdown Files (.md)
+
 ```markdown
 ---
-component: Hero           # Optional component name
-props:                   # Optional component properties
+component: Hero # Optional component name
+props: # Optional component properties
   background: ./bg.jpg
 ---
+
 # Section Title
+
 Content in Markdown format
-````
+```
 
 #### JSON Files (.json)
 
@@ -175,17 +187,10 @@ The library handles several types of errors:
 
 Errors are collected in the `errors` array of the output, allowing processing to continue even when some files fail.
 
-## Performance
-
-The library is designed for performance:
-
-- Processes files in parallel using Promise.all
-- Uses async/await for non-blocking I/O
-- Efficiently builds section hierarchies using Map
-
 ## Requirements
 
 - Node.js >=14.0.0
+- When using the webpack plugin, webpack >=5.0.0 is required
 
 ## License
 
