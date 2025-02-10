@@ -29,24 +29,43 @@ async function processWebsite() {
 
 ### Command Line Interface
 
-Process content directly from the command line:
+Process content directly from the command line using `npx`:
 
 ```bash
-# Basic usage
-collect-content ./source-dir ./output-dir
+# Output to directory (creates site-content.json)
+npx collect-content ./source-dir ./output-dir
+
+# Output to specific JSON file
+npx collect-content ./source-dir ./output-dir/custom-name.json
 
 # With pretty-printed JSON output
+npx collect-content ./source-dir ./output.json --pretty
+
+# With verbose logging
+npx collect-content ./source-dir ./output.json --verbose
+```
+
+The CLI enforces these rules for safety:
+
+- When specifying a directory, it creates `site-content.json` inside it
+- When specifying a file, it must have a `.json` extension
+- Creates output directories if they don't exist
+
+# With pretty-printed JSON output
+
 collect-content ./source-dir ./output-dir --pretty
 
 # With verbose logging
+
 collect-content ./source-dir ./output-dir --verbose
 
 # Show help
+
 collect-content --help
+
 ```
 
 The CLI will:
-
 1. Process all content from the source directory
 2. Create the target directory if it doesn't exist
 3. Save the processed content as `site-content.json`
@@ -57,35 +76,34 @@ The CLI will:
 The library expects a folder structure organized as follows:
 
 ```
+
 website/
-├── site.yml               # Site-wide metadata and settings
-├── home/                  # Each folder is a page
-│   ├── page.yml          # Page-specific metadata
-│   ├── 1-hero.md         # Section with prefix "1"
-│   ├── 2-features.md     # Section with prefix "2"
-│   └── 2.1-feature.md    # Subsection of "2"
+├── site.yml # Site-wide metadata and settings
+├── home/ # Each folder is a page
+│ ├── page.yml # Page-specific metadata
+│ ├── 1-hero.md # Section with prefix "1"
+│ ├── 2-features.md # Section with prefix "2"
+│ └── 2.1-feature.md # Subsection of "2"
 └── about/
-    ├── page.yml
-    └── 1-intro.json      # JSON sections are also supported
-```
+├── page.yml
+└── 1-intro.json # JSON sections are also supported
+
+````
 
 ### Content Files
 
 The library processes two types of content files:
 
 #### Markdown Files (.md)
-
 ```markdown
 ---
-component: Hero # Optional component name
-props: # Optional component properties
+component: Hero           # Optional component name
+props:                   # Optional component properties
   background: ./bg.jpg
 ---
-
 # Section Title
-
 Content in Markdown format
-```
+````
 
 #### JSON Files (.json)
 
