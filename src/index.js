@@ -17,15 +17,18 @@ async function readYamlFile(path) {
 
 async function processMarkdown(content = "") {
   let component = null;
+  let generic = null;
   let props = {};
   let markdown = content;
 
+  // Read front matter if present
   if (content.trim().startsWith("---")) {
     const parts = content.split("---\n");
     if (parts.length >= 3) {
       try {
         const frontMatter = yaml.load(parts[1]);
         component = frontMatter?.component || null;
+        generic = frontMatter?.config || null;
         props = frontMatter?.props || {};
         markdown = parts.slice(2).join("---\n");
       } catch (err) {
@@ -36,6 +39,7 @@ async function processMarkdown(content = "") {
 
   return {
     component,
+    generic,
     props,
     content: markdownToProseMirror(markdown),
   };
@@ -116,7 +120,9 @@ function buildSectionHierarchy(sections) {
   return topLevel;
 }
 
-async function processPage(pagePath) {
+async function processPage(rootPath, dir) {
+  const pagePath = join(rootPath, dir);
+
   const [files, pageMetadata] = await Promise.all([
     readdir(pagePath),
     readYamlFile(join(pagePath, "page.yml")),
@@ -129,15 +135,18 @@ async function processPage(pagePath) {
   );
 
   return {
-    metadata: pageMetadata,
+    route: "/" + (dir === "index" ? "" : dir),
+    ...pageMetadata,
     sections: buildSectionHierarchy(sections.filter(Boolean)),
   };
 }
 
 async function collectSiteContent(rootPath) {
+  const siteMetadata = await readYamlFile(join(rootPath, "site.yml"));
+
   const output = {
-    siteMetadata: await readYamlFile(join(rootPath, "site.yml")),
-    pages: {},
+    pages: [],
+    ...siteMetadata,
     errors: [],
   };
 
@@ -159,7 +168,8 @@ async function collectSiteContent(rootPath) {
   await Promise.all(
     dirStats.filter(Boolean).map(async (dir) => {
       try {
-        output.pages[dir] = await processPage(join(rootPath, dir));
+        const page = await processPage(rootPath, dir);
+        dir === "index" ? output.pages.unshift(page) : output.pages.push(page);
       } catch (err) {
         output.errors.push({ page: dir, error: err.message });
       }
