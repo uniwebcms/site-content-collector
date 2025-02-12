@@ -81,7 +81,9 @@ The webpack configuration expects a remote module URL in your `site.yml`:
 
 ```yaml
 components:
-  moduleUrl: "https://your-remote-module-url" # Required
+  url: https://your-remote-module-domain" # https://REPO-NAME.github.io
+  module: remote-module-path # Marketing/Outreach
+  version: latest # or specific hash
 ```
 
 ### Development Server Features
