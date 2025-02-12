@@ -142,11 +142,11 @@ async function processPage(rootPath, dir) {
 }
 
 async function collectSiteContent(rootPath) {
-  const siteMetadata = await readYamlFile(join(rootPath, "site.yml"));
+  const theme = await readYamlFile(join(rootPath, "theme.yml"));
 
   const output = {
     pages: [],
-    ...siteMetadata,
+    theme,
     errors: [],
   };
 
@@ -165,6 +165,7 @@ async function collectSiteContent(rootPath) {
     })
   );
 
+  // Read all pages
   await Promise.all(
     dirStats.filter(Boolean).map(async (dir) => {
       try {
