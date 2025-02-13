@@ -15,7 +15,7 @@
     "test-report": "jest --json > test-results.json 2>&1"
   },
   "dependencies": {
-    "@uniwebcms/content-reader": "^1.0.0",
+    "@uniwebcms/content-reader": "^1.0.1",
     "js-yaml": "^4.1.0",
     "commander": "^11.1.0"
   },
