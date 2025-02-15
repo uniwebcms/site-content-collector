@@ -147,8 +147,9 @@ async function collectSiteContent(rootPath) {
   const output = {
     pages: [],
     theme,
-    errors: [],
   };
+
+  const errors = [];
 
   let entries;
   try {
@@ -170,12 +171,18 @@ async function collectSiteContent(rootPath) {
     dirStats.filter(Boolean).map(async (dir) => {
       try {
         const page = await processPage(rootPath, dir);
-        dir === "index" ? output.pages.unshift(page) : output.pages.push(page);
+        page.route === "/"
+          ? output.pages.unshift(page)
+          : output.pages.push(page);
       } catch (err) {
-        output.errors.push({ page: dir, error: err.message });
+        errors.push({ page: dir, error: err.message });
       }
     })
   );
+
+  if (process.env.NODE_ENV === "development") {
+    output.errors = errors;
+  }
 
   return output;
 }
