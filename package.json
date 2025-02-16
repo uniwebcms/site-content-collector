@@ -1,26 +1,31 @@
 {
   "name": "@uniwebcms/site-content-collector",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "Collect and process website content from a folder structure",
+  "type": "module",
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./webpack": "./src/webpack/config.js"
+    "./webpack": "./src/webpack/config.js",
+    "./plugins": "./src/plugins/index.js"
   },
   "bin": {
     "collect-content": "./bin/collect-content.js"
   },
   "scripts": {
-    "test": "jest",
-    "test-report": "jest --json > test-results.json 2>&1"
+    "old-test": "jest",
+    "old-test-report": "jest --json > test-results.json 2>&1",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test-report": "node --experimental-vm-modules node_modules/jest/bin/jest.js --json > test-results.json 2>&1"
   },
   "dependencies": {
     "@uniwebcms/content-reader": "^1.0.1",
-    "js-yaml": "^4.1.0",
-    "commander": "^11.1.0"
+    "commander": "^11.1.0",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0"
   },
   "peerDependencies": {
     "copy-webpack-plugin": "^12.0.2",
@@ -28,7 +33,7 @@
     "webpack": "^5.97.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "author": "Proximify Inc.",
   "license": "GPL-3.0-or-later",
