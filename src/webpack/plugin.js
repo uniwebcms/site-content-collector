@@ -1,8 +1,7 @@
 // src/webpack/plugin.js
-const { collectSiteContent } = require("../index");
-const { resolve } = require("path");
-const { watch } = require("fs");
-
+import { collectSiteContent } from "../index.js"; // Note the .js extension
+import { resolve } from "path";
+import { watch } from "fs";
 class SiteContentPlugin {
   constructor(options = {}) {
     this.sourcePath = options.sourcePath;
@@ -105,4 +104,5 @@ class SiteContentPlugin {
   }
 }
 
-module.exports = SiteContentPlugin;
+// module.exports = SiteContentPlugin;
+export { SiteContentPlugin };

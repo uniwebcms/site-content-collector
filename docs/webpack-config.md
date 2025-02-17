@@ -21,10 +21,10 @@ The package provides a pre-configured webpack 5 setup through the `getConfig` fu
 The simplest approach is to use the provided configuration in your project's `webpack.config.js`:
 
 ```javascript
-const { getConfig } = require("@uniwebcms/site-content-collector/webpack");
-const webpack = require("webpack");
+import { getConfig } from "@uniwebcms/site-content-collector/webpack";
+import webpack from "webpack";
 
-module.exports = async (_, argv) => getConfig(webpack, argv, __dirname);
+export default async (_, argv) => getConfig(webpack, argv, import.meta.url);
 ```
 
 ### 2. Extending the Configuration
@@ -32,11 +32,11 @@ module.exports = async (_, argv) => getConfig(webpack, argv, __dirname);
 To modify the default configuration while keeping its base features:
 
 ```javascript
-const { getConfig } = require("@uniwebcms/site-content-collector/webpack");
-const webpack = require("webpack");
+import { getConfig } from "@uniwebcms/site-content-collector/webpack";
+import webpack from "webpack";
 
-module.exports = async (_, argv) => {
-  const config = await getConfig(webpack, argv, __dirname);
+export default async (_, argv) => {
+  const config = await getConfig(webpack, argv, import.meta.url);
 
   // Add your customizations
   config.plugins.push(/* your plugins */);
@@ -51,10 +51,10 @@ module.exports = async (_, argv) => {
 For complete control, you can copy the webpack configuration code from `@uniwebcms/site-content-collector/src/webpack/config.js` into your project. When doing this, replace the local imports with:
 
 ```javascript
-const {
+import {
   SiteContentPlugin,
   loadSiteConfig,
-} = require("@uniwebcms/site-content-collector/webpack");
+} from "@uniwebcms/site-content-collector/webpack";
 ```
 
 Then modify the configuration code as needed for your project.

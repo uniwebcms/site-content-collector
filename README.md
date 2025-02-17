@@ -19,7 +19,7 @@ This library can be used in three ways:
 ### Node.js Module
 
 ```javascript
-const { collectSiteContent } = require("@uniwebcms/site-content-collector");
+import { collectSiteContent } from "@uniwebcms/site-content-collector";
 
 async function processWebsite() {
   try {
@@ -60,9 +60,9 @@ The CLI enforces these rules for safety:
 The webpack plugin integrates content collection into your build process:
 
 ```javascript
-const SiteContentPlugin = require("@uniwebcms/site-content-collector/webpack");
+import { SiteContentPlugin } from "@uniwebcms/site-content-collector/webpack";
 
-module.exports = {
+export default {
   plugins: [
     new SiteContentPlugin({
       sourcePath: "./content/pages", // Required: path to content directory
@@ -222,9 +222,14 @@ Errors are collected in the `errors` array of the output, allowing processing to
 
 ## Requirements
 
-- Node.js >=14.0.0
+- Node.js >=18.0.0
 - When using the webpack plugin, webpack >=5.0.0 is required
+
+This package uses ES Modules (ESM). Your project should either:
+
+- Have `"type": "module"` in its package.json, or
+- Use the `.mjs` extension for files using ESM syntax
 
 ## License
 
-Apache 2.0 - see LICENSE for details
+GPL-3.0-or-later - see LICENSE for details

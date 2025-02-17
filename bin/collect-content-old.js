@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const { program } = require("commander");
-const { resolve, parse, join } = require("path");
-const { writeFile, mkdir } = require("fs/promises");
-const { collectSiteContent } = require("../src/index");
+import { program } from "commander";
+import { resolve, parse, join } from "path";
+import { writeFile, mkdir } from "fs/promises";
+import { collectSiteContent } from "../src/index.js"; // Note the .js extension
 
 program
   .name("collect-content")

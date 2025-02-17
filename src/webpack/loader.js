@@ -1,6 +1,6 @@
-const { readFile, stat } = require("fs/promises");
-const { join } = require("path");
-const yaml = require("js-yaml");
+import { readFile, stat } from "fs/promises";
+import { join } from "path";
+import yaml from "js-yaml";
 
 /**
  * Loads and processes the site configuration from site.yml.
@@ -77,4 +77,5 @@ async function loadSiteConfig(sitePath) {
   }
 }
 
-module.exports = loadSiteConfig;
+// module.exports = loadSiteConfig;
+export { loadSiteConfig };

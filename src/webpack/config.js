@@ -1,9 +1,9 @@
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
-const SiteContentPlugin = require("./plugin"); // also exported
-const loadSiteConfig = require("./loader"); // also exported
-
+import { resolve, join, dirname } from "path";
+import { fileURLToPath } from "url";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import CopyPlugin from "copy-webpack-plugin";
+import { SiteContentPlugin } from "./plugin.js"; // Note the .js extension
+import { loadSiteConfig } from "./loader.js"; // Note the .js extension
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
  *
@@ -11,20 +11,26 @@ const loadSiteConfig = require("./loader"); // also exported
  * @param {object} argv - Webpack CLI arguments object
  * @param {string} argv.mode - Build mode ('production' or 'development')
  * @param {number} [argv.port] - Dev server port number
- * @param {string} [rootDir=__dirname] - Project root directory path
+ * @param {string} importMetaUrl  - The import.meta.url of the webpack config file
  * @returns {Promise<object>} Webpack configuration object
  * @throws {Error} If remote module URL is not configured in site.yml
  *
  * @example
- * const config = await getConfig(webpack, {
- *   mode: 'development',
- *   port: 3000
- * });
+ * // webpack.config.js
+ * import { getConfig } from "@uniwebcms/site-content-collector/webpack";
+ * import webpack from "webpack";
+ *
+ * export default async (_, argv) => getConfig(webpack, argv, import.meta.url);
  */
-async function getConfig(webpack, argv, rootDir = __dirname) {
+async function getConfig(webpack, argv, importMetaUrl) {
+  const rootDir = dirname(fileURLToPath(importMetaUrl));
   const isProduction = argv.mode === "production";
   const mode = isProduction ? "production" : "development";
-  const serverPort = parseInt(argv.port) || 3000;
+  const serverPort = parseInt(argv.port) || 3005;
+
+  if (!rootDir) {
+    throw new Error("Invalid root directory");
+  }
 
   const config = await loadSiteConfig(rootDir);
   console.log("Remote module URL:", config.components.moduleUrl);
@@ -41,7 +47,7 @@ async function getConfig(webpack, argv, rootDir = __dirname) {
     mode,
     entry: "./src/index.js",
     output: {
-      path: path.resolve(rootDir, "dist"),
+      path: resolve(rootDir, "dist"),
       filename: "[name].[contenthash].js",
       publicPath: "auto",
       clean: true,
@@ -100,8 +106,8 @@ async function getConfig(webpack, argv, rootDir = __dirname) {
       new CopyPlugin({
         patterns: [
           {
-            from: path.resolve(rootDir, "public"), // Source folder
-            to: path.resolve(rootDir, "dist"), // Destination folder
+            from: resolve(rootDir, "public"), // Source folder
+            to: resolve(rootDir, "dist"), // Destination folder
             globOptions: {
               ignore: ["**/index.html"], // ✅ Ignore index.html
             },
@@ -129,7 +135,7 @@ async function getConfig(webpack, argv, rootDir = __dirname) {
     devServer: {
       historyApiFallback: true,
       static: {
-        directory: path.join(rootDir, "dist"),
+        directory: join(rootDir, "dist"),
       },
       port: serverPort,
       // proxy: [
@@ -155,4 +161,5 @@ async function getConfig(webpack, argv, rootDir = __dirname) {
   };
 }
 
-module.exports = { getConfig, loadSiteConfig, SiteContentPlugin };
+// module.exports = { getConfig, loadSiteConfig, SiteContentPlugin };
+export { getConfig, loadSiteConfig, SiteContentPlugin };
