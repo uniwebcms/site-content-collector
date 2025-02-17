@@ -1,6 +1,6 @@
 // src/core/plugin.js
 
-export class ContentPlugin {
+export class CollectorPlugin {
   constructor(options = {}) {
     this.options = options;
   }
@@ -21,13 +21,13 @@ export class ContentPlugin {
   }
 }
 
-export class ProcessorPlugin extends ContentPlugin {
+export class ProcessorPlugin extends CollectorPlugin {
   async processContent(content, context) {
     return content;
   }
 }
 
-export class LoaderPlugin extends ContentPlugin {
+export class LoaderPlugin extends CollectorPlugin {
   async loadData(source, context) {
     return null;
   }
@@ -48,7 +48,7 @@ export class LoaderPlugin extends ContentPlugin {
   }
 }
 
-export class TransformerPlugin extends ContentPlugin {
+export class TransformerPlugin extends CollectorPlugin {
   async transform(data, context) {
     return data;
   }

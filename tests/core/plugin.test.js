@@ -1,7 +1,7 @@
 // tests/core/plugin.test.js
 import { jest } from "@jest/globals";
 import {
-  ContentPlugin,
+  CollectorPlugin,
   ProcessorPlugin,
   LoaderPlugin,
   PluginRegistry,
@@ -11,7 +11,7 @@ describe("Plugin System", () => {
   describe("PluginRegistry", () => {
     test("registers and retrieves plugins", () => {
       const registry = new PluginRegistry();
-      const plugin = new ContentPlugin();
+      const plugin = new CollectorPlugin();
 
       registry.register(plugin);
       expect(registry.get(plugin.constructor.name)).toBe(plugin);
@@ -19,9 +19,9 @@ describe("Plugin System", () => {
 
     test("handles plugin dependencies correctly", () => {
       const registry = new PluginRegistry();
-      const pluginA = new ContentPlugin();
-      const pluginB = new ContentPlugin();
-      const pluginC = new ContentPlugin();
+      const pluginA = new CollectorPlugin();
+      const pluginB = new CollectorPlugin();
+      const pluginC = new CollectorPlugin();
 
       // B depends on A, C depends on B
       registry
@@ -39,8 +39,8 @@ describe("Plugin System", () => {
 
     test("throws on circular dependencies", () => {
       const registry = new PluginRegistry();
-      class PluginA extends ContentPlugin {}
-      class PluginB extends ContentPlugin {}
+      class PluginA extends CollectorPlugin {}
+      class PluginB extends CollectorPlugin {}
 
       registry
         .register(new PluginA(), ["PluginB"])
@@ -122,14 +122,14 @@ describe("Plugin System", () => {
 
   describe("Error Handling", () => {
     test("adds errors to context", () => {
-      const plugin = new ContentPlugin();
+      const plugin = new CollectorPlugin();
       const context = { errors: [] };
       const error = new Error("Test error");
 
       plugin.addError(context, error);
 
       expect(context.errors[0]).toMatchObject({
-        plugin: "ContentPlugin",
+        plugin: "CollectorPlugin",
         message: "Test error",
       });
     });
@@ -138,7 +138,7 @@ describe("Plugin System", () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = "development";
 
-      const plugin = new ContentPlugin();
+      const plugin = new CollectorPlugin();
       const context = { errors: [] };
       const error = new Error("Test error");
 

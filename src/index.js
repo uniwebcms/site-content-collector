@@ -7,7 +7,7 @@ import { ImageMetadataPlugin } from "./plugins/image-meta.js";
 
 // Plugin framework
 export {
-  ContentPlugin,
+  CollectorPlugin,
   ProcessorPlugin, // Modifies ProseMirror document
   LoaderPlugin, // Load data from external sources (ie not md files)
   TransformerPlugin, // Modifies the final output structure

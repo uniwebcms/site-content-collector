@@ -1,10 +1,16 @@
+// Node.js built-ins
 import { resolve, join, dirname } from "path";
 import { fileURLToPath } from "url";
+
+// External packages
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
+
+// Local imports
 import { SiteContentPlugin } from "./plugin.js";
-import { ContentPlugin } from "./core/plugin.js";
+import { CollectorPlugin } from "./core/plugin.js";
 import { loadSiteConfig } from "./loader.js";
+
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
  *
@@ -12,43 +18,68 @@ import { loadSiteConfig } from "./loader.js";
  * @param {object} argv - Webpack CLI arguments object
  * @param {string} argv.mode - Build mode ('production' or 'development')
  * @param {number} [argv.port] - Dev server port number
- * @param {string} importMetaUrl  - The import.meta.url of the webpack config file
- * @param {Array} userPlugins  - Custom collector and webpack plugins.
+ * @param {string} importMetaUrl - The import.meta.url of the webpack config file
+ * @param {Array} userPlugins - Custom plugins to extend functionality. Can be instances
+ *                             of CollectorPlugin for content processing or webpack plugins
+ *                             for build customization.
  * @returns {Promise<object>} Webpack configuration object
  * @throws {Error} If remote module URL is not configured in site.yml
+ * @throws {Error} If userPlugins is not an array
+ * @throws {Error} If rootDir is invalid
  *
  * @example
  * // webpack.config.js
  * import { getConfig } from "@uniwebcms/site-content-collector/webpack";
  * import webpack from "webpack";
+ * import { ImageOptimizerPlugin } from './plugins/image-optimizer';
+ * import { CustomWebpackPlugin } from './plugins/webpack-plugin';
  *
- * export default async (_, argv) => getConfig(webpack, argv, import.meta.url);
+ * const plugins = [
+ *   new ImageOptimizerPlugin({ quality: 80 }),  // CollectorPlugin for image processing
+ *   new CustomWebpackPlugin()                   // Standard webpack plugin
+ * ];
+ *
+ * export default async (_, argv) => getConfig(webpack, argv, import.meta.url, plugins);
  */
 async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
-  const rootDir = dirname(fileURLToPath(importMetaUrl));
-  const isProduction = argv.mode === "production";
-  const mode = isProduction ? "production" : "development";
-  const serverPort = parseInt(argv.port) || 3005;
+  // Validate inputs
+  if (!Array.isArray(userPlugins)) {
+    throw new Error("userPlugins must be an array");
+  }
 
+  const rootDir = dirname(fileURLToPath(importMetaUrl));
   if (!rootDir) {
     throw new Error("Invalid root directory");
   }
 
+  // Load and validate site configuration
   const config = await loadSiteConfig(rootDir);
-  console.log("Remote module URL:", config.components.moduleUrl);
-
-  if (!config.components.moduleUrl) {
+  if (!config.components?.moduleUrl) {
     throw new Error(
-      "A remote module URL is required. Please provide it in site.yml"
+      "Remote module URL is required in site.yml (components.moduleUrl)"
     );
   }
 
+  // Setup environment
+  const isProduction = argv.mode === "production";
+  const mode = isProduction ? "production" : "development";
+  const serverPort = parseInt(argv.port) || 3005;
+
+  // Extract webpack plugins
   const { ModuleFederationPlugin } = webpack.container;
 
+  // Partition user plugins by type
   const [collectorPlugins, webpackPlugins] = [
-    userPlugins.filter((p) => p instanceof ContentPlugin),
-    userPlugins.filter((p) => !(p instanceof ContentPlugin)),
+    userPlugins.filter((p) => p instanceof CollectorPlugin),
+    userPlugins.filter((p) => !(p instanceof CollectorPlugin)),
   ];
+
+  // Log plugin distribution for debugging
+  if (collectorPlugins.length || webpackPlugins.length) {
+    console.log(
+      `Found ${collectorPlugins.length} collector plugins and ${webpackPlugins.length} webpack plugins`
+    );
+  }
 
   return {
     mode,
@@ -101,9 +132,12 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
       ],
     },
     plugins: [
+      // Generate HTML file and inject bundles
       new HtmlWebpackPlugin({
         template: "./public/index.html",
       }),
+
+      // Process and inject site content
       new SiteContentPlugin({
         sourcePath: "./pages", // Required: path to content directory
         injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
@@ -111,17 +145,21 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
         filename: "site-content.json", // Optional: output filename when not injecting
         plugins: collectorPlugins,
       }),
+
+      // Copy static assets
       new CopyPlugin({
         patterns: [
           {
-            from: resolve(rootDir, "public"), // Source folder
-            to: resolve(rootDir, "dist"), // Destination folder
+            from: resolve(rootDir, "public"),
+            to: resolve(rootDir, "dist"),
             globOptions: {
-              ignore: ["**/index.html"], // ✅ Ignore index.html
+              ignore: ["**/index.html"],
             },
           },
         ],
       }),
+
+      // Configure module federation for remote component loading
       new ModuleFederationPlugin({
         name: "site-builder",
         remotes: {
@@ -138,8 +176,10 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
             requiredVersion: "^6.4.2",
           },
         },
-        ...webpackPlugins,
       }),
+
+      // Add user-provided webpack plugins
+      ...webpackPlugins,
     ],
     devServer: {
       historyApiFallback: true,
