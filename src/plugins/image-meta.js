@@ -1,7 +1,6 @@
 // src/plugins/image-meta.js
 import { readFile } from "node:fs/promises";
-import { join, dirname, basename, resolve } from "node:path";
-import yaml from "js-yaml";
+import { dirname, resolve } from "node:path";
 import { ProcessorPlugin } from "../core/plugin.js";
 import { readYamlFile } from "../core/utils.js";
 

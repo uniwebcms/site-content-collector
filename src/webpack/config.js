@@ -3,6 +3,7 @@ import { fileURLToPath } from "url";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 import { SiteContentPlugin } from "./plugin.js";
+import { ContentPlugin } from "./core/plugin.js";
 import { loadSiteConfig } from "./loader.js";
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
@@ -12,6 +13,7 @@ import { loadSiteConfig } from "./loader.js";
  * @param {string} argv.mode - Build mode ('production' or 'development')
  * @param {number} [argv.port] - Dev server port number
  * @param {string} importMetaUrl  - The import.meta.url of the webpack config file
+ * @param {Array} userPlugins  - Custom collector and webpack plugins.
  * @returns {Promise<object>} Webpack configuration object
  * @throws {Error} If remote module URL is not configured in site.yml
  *
@@ -22,7 +24,7 @@ import { loadSiteConfig } from "./loader.js";
  *
  * export default async (_, argv) => getConfig(webpack, argv, import.meta.url);
  */
-async function getConfig(webpack, argv, importMetaUrl) {
+async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
   const rootDir = dirname(fileURLToPath(importMetaUrl));
   const isProduction = argv.mode === "production";
   const mode = isProduction ? "production" : "development";
@@ -42,6 +44,11 @@ async function getConfig(webpack, argv, importMetaUrl) {
   }
 
   const { ModuleFederationPlugin } = webpack.container;
+
+  const [collectorPlugins, webpackPlugins] = [
+    userPlugins.filter((p) => p instanceof ContentPlugin),
+    userPlugins.filter((p) => !(p instanceof ContentPlugin)),
+  ];
 
   return {
     mode,
@@ -102,6 +109,7 @@ async function getConfig(webpack, argv, importMetaUrl) {
         injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
         variableName: "__SITE_CONTENT__", // Optional: global variable name when injecting
         filename: "site-content.json", // Optional: output filename when not injecting
+        plugins: collectorPlugins,
       }),
       new CopyPlugin({
         patterns: [
@@ -130,6 +138,7 @@ async function getConfig(webpack, argv, importMetaUrl) {
             requiredVersion: "^6.4.2",
           },
         },
+        ...webpackPlugins,
       }),
     ],
     devServer: {
