@@ -1,5 +1,5 @@
 // src/webpack/plugin.js
-import { collectSiteContent } from "../index.js"; // Note the .js extension
+import { collectSiteContent } from "../index.js";
 import { resolve } from "path";
 import { watch } from "fs";
 class SiteContentPlugin {
@@ -104,5 +104,4 @@ class SiteContentPlugin {
   }
 }
 
-// module.exports = SiteContentPlugin;
 export { SiteContentPlugin };

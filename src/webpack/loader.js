@@ -77,5 +77,4 @@ async function loadSiteConfig(sitePath) {
   }
 }
 
-// module.exports = loadSiteConfig;
 export { loadSiteConfig };

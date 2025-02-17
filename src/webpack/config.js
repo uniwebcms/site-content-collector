@@ -2,8 +2,8 @@ import { resolve, join, dirname } from "path";
 import { fileURLToPath } from "url";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
-import { SiteContentPlugin } from "./plugin.js"; // Note the .js extension
-import { loadSiteConfig } from "./loader.js"; // Note the .js extension
+import { SiteContentPlugin } from "./plugin.js";
+import { loadSiteConfig } from "./loader.js";
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
  *
@@ -138,12 +138,6 @@ async function getConfig(webpack, argv, importMetaUrl) {
         directory: join(rootDir, "dist"),
       },
       port: serverPort,
-      // proxy: [
-      //     {
-      //         context: ['/content.json', '/assets'],
-      //         target: 'http://localhost:3000'
-      //     }
-      // ]
     },
     optimization: {
       moduleIds: "deterministic",
@@ -161,5 +155,4 @@ async function getConfig(webpack, argv, importMetaUrl) {
   };
 }
 
-// module.exports = { getConfig, loadSiteConfig, SiteContentPlugin };
 export { getConfig, loadSiteConfig, SiteContentPlugin };
