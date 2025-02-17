@@ -67,6 +67,7 @@ export class ContentCollector {
 
   async #processRoot(rootPath) {
     const siteConfig = await readYamlFile(join(rootPath, "site.yml"));
+    const contentPath = join(rootPath, "pages");
 
     const output = {
       config: siteConfig,
@@ -74,7 +75,7 @@ export class ContentCollector {
     };
 
     // Read directory entries
-    const entries = await readdir(rootPath).catch((err) => {
+    const entries = await readdir(contentPath).catch((err) => {
       if (err.code === "ENOENT") return [];
       throw err;
     });
@@ -82,7 +83,7 @@ export class ContentCollector {
     // Process each directory as a potential page
     await Promise.all(
       entries.map(async (entry) => {
-        const path = join(rootPath, entry);
+        const path = join(contentPath, entry);
         const isDir = await stat(path).then((stats) => stats.isDirectory());
 
         if (!isDir) return;

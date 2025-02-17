@@ -8,10 +8,12 @@ import { ContentCollector } from "../../src/core/collector.js";
 // Create temporary test files and directories
 async function createTestStructure() {
   const root = join(tmpdir(), "content-collector-test-" + Date.now());
+  const contentDir = join(root, "pages");
 
   await mkdir(root);
-  await mkdir(join(root, "home"));
-  await mkdir(join(root, "about"));
+  await mkdir(contentDir);
+  await mkdir(join(contentDir, "home"));
+  await mkdir(join(contentDir, "about"));
 
   // Create site.yml
   await writeFile(
@@ -24,7 +26,7 @@ description: Test site for content collector
 
   // Create home page
   await writeFile(
-    join(root, "home", "page.yml"),
+    join(contentDir, "home", "page.yml"),
     `
 title: Home Page
 description: Welcome to the test site
@@ -32,7 +34,7 @@ description: Welcome to the test site
   );
 
   await writeFile(
-    join(root, "home", "1-hero.md"),
+    join(contentDir, "home", "1-hero.md"),
     `---
 component: Hero
 props:
@@ -45,7 +47,7 @@ This is the hero section.
   );
 
   await writeFile(
-    join(root, "home", "2-features.md"),
+    join(contentDir, "home", "2-features.md"),
     `---
 component: Features
 ---
@@ -57,7 +59,7 @@ component: Features
   );
 
   await writeFile(
-    join(root, "home", "2.1-feature-detail.md"),
+    join(contentDir, "home", "2.1-feature-detail.md"),
     `---
 component: FeatureDetail
 ---
@@ -67,14 +69,14 @@ Detailed feature description
 
   // Create about page
   await writeFile(
-    join(root, "about", "page.yml"),
+    join(contentDir, "about", "page.yml"),
     `
 title: About Us
   `
   );
 
   await writeFile(
-    join(root, "about", "1-intro.md"),
+    join(contentDir, "about", "1-intro.md"),
     `---
 component: Text
 ---
@@ -119,7 +121,7 @@ describe("ContentCollector", () => {
   test("handles missing numeric prefixes based on configuration", async () => {
     // Create a file without numeric prefix
     await writeFile(
-      join(testRoot, "home", "no-prefix.md"),
+      join(testRoot, "pages", "home", "no-prefix.md"),
       `---
 component: Text
 ---
@@ -161,7 +163,7 @@ No prefix content
 
     // Create invalid markdown file
     await writeFile(
-      join(testRoot, "home", "3-invalid.md"),
+      join(testRoot, "pages", "home", "3-invalid.md"),
       `---
 invalid yaml
 ---
