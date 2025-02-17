@@ -37,12 +37,38 @@ describe("collectSiteContent", () => {
 
     // Check section hierarchy
     const [hero, features] = homePage.sections;
+    // console.log("hero", JSON.stringify(hero));
+    // First section: Hero
     expect(hero.id).toBe("1");
     expect(hero.component).toBe("Hero");
+
+    expect(hero.content).toMatchObject({
+      type: "doc",
+      content: expect.any(Array),
+    });
+
+    expect(hero.content.content[2]).toMatchObject({
+      type: "paragraph",
+      content: [
+        {
+          type: "image",
+          attrs: {
+            src: "/img/logo_light.svg",
+            title: "my icon",
+            svg: expect.any(String),
+            metadata: {
+              alt: "Logo of Uniweb Modules",
+            },
+          },
+        },
+      ],
+    });
+
+    // Second section: Features
     expect(features.id).toBe("2");
     expect(features.subsections).toHaveLength(1);
 
-    // Check subsection
+    // Check subsection of features
     const featureOne = features.subsections[0];
     expect(featureOne.id).toBe("2.1");
     expect(featureOne.component).toBe("Feature");

@@ -100,7 +100,6 @@ export class ImageMetadataPlugin extends ProcessorPlugin {
     if (src.startsWith("/")) {
       return resolve(
         context.resourcePath,
-        "..",
         this.options.publicDir,
         src.slice(1)
       );
