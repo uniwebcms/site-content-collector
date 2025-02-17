@@ -19,13 +19,13 @@
     "test-report": "node --experimental-vm-modules node_modules/jest/bin/jest.js --json > test-results.json 2>&1"
   },
   "dependencies": {
-    "@uniwebcms/content-reader": "^1.0.1",
+    "@uniwebcms/content-reader": "^1.0.2",
     "commander": "^11.1.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "@jest/globals": "^29.7.0"
+    "@jest/globals": "^29.7.0",
+    "jest": "^29.7.0"
   },
   "peerDependencies": {
     "copy-webpack-plugin": "^12.0.2",
