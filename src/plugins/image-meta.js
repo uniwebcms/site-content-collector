@@ -45,7 +45,7 @@ export class ImageMetadataPlugin extends ProcessorPlugin {
   }
 
   async #enrichImageNode(node, context) {
-    const { src, alt = "" } = node.attrs || {};
+    const { src } = node.attrs || {};
     if (!src) return;
 
     try {
@@ -54,19 +54,32 @@ export class ImageMetadataPlugin extends ProcessorPlugin {
       const metadataPath = imagePath + this.options.sidecarExt;
 
       // Read metadata file
-      const metadata = await readYamlFile(metadataPath);
-      if (!Object.keys(metadata).length) return;
+      let metadata = await readYamlFile(metadataPath);
 
-      // Update node attributes with metadata
-      node.attrs = {
-        ...node.attrs,
-        alt: metadata.alt || alt, // Override alt if provided in metadata
-        title: metadata.caption || metadata.title,
-        metadata: {
-          ...metadata,
-          originalSrc: src,
-        },
-      };
+      // Update node attributes with metadata if available
+      if (typeof metadata === "object" && !Array.isArray(metadata)) {
+        // Preserve inline title and alt if present
+        const title = metadata.title || metadata.caption;
+        const alt = metadata.alt;
+
+        if (title && !node.attrs.title) node.attrs.title = title;
+        if (alt && !node.attrs.alt) node.attrs.alt = alt;
+
+        node.attrs.metadata = metadata;
+      }
+
+      // Check if the file is an SVG
+      if (src.toLowerCase().endsWith(".svg")) {
+        try {
+          // Read the SVG file content and save it as "svg" content
+          node.attrs.svg = await readFile(imagePath, "utf8");
+        } catch (svgErr) {
+          this.addError(
+            context,
+            `Failed to read SVG content for ${src}: ${svgErr.message}`
+          );
+        }
+      }
 
       // Remove any undefined or null values
       Object.keys(node.attrs).forEach((key) => {
