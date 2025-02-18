@@ -5,6 +5,7 @@ import { watch } from "fs";
 class SiteContentPlugin {
   constructor(options = {}) {
     this.sourcePath = "./";
+    this.contentPath = "pages";
     this.injectToHtml = options.injectToHtml ?? false;
     this.variableName = options.variableName ?? "__SITE_CONTENT__";
     this.filename = options.filename ?? "site-content.json";
@@ -90,8 +91,13 @@ class SiteContentPlugin {
       compiler.hooks.afterEnvironment.tap(pluginName, () => {
         if (!this.watching) {
           this.watching = true;
-          const sourcePath = resolve(compiler.context, this.sourcePath);
-          watch(sourcePath, { recursive: true }, () => {
+          // We may have to watch the public folder too
+          const watchPath = resolve(
+            compiler.context,
+            this.sourcePath,
+            this.contentPath
+          );
+          watch(watchPath, { recursive: true }, () => {
             if (compiler.watching) {
               compiler.watching.invalidate();
             }

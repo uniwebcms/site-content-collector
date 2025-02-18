@@ -67,7 +67,7 @@ export class ContentCollector {
 
   async #processRoot(rootPath) {
     const siteConfig = await readYamlFile(join(rootPath, "site.yml"));
-    const contentPath = join(rootPath, "pages");
+    const contentPath = join(rootPath, "pages"); // get relative contentPath instead?
 
     const output = {
       config: siteConfig,
