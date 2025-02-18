@@ -53,7 +53,7 @@ describe("collectSiteContent", () => {
         {
           type: "image",
           attrs: {
-            src: "/img/logo_light.svg",
+            src: "/public/img/logo_light.svg",
             title: "my icon",
             svg: expect.any(String),
             metadata: {

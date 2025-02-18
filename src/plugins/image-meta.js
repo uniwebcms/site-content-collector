@@ -9,7 +9,7 @@ export class ImageMetadataPlugin extends ProcessorPlugin {
     super(options);
     this.options = {
       sidecarExt: ".yml",
-      publicDir: "public",
+      // publicDir: "public",
       ...options,
     };
   }
@@ -99,7 +99,7 @@ export class ImageMetadataPlugin extends ProcessorPlugin {
     if (src.startsWith("/")) {
       return resolve(
         context.resourcePath,
-        this.options.publicDir,
+        // this.options.publicDir,
         src.slice(1)
       );
     }

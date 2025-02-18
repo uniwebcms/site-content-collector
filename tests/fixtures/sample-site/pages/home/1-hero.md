@@ -9,4 +9,4 @@ props:
 
 This is the hero section.
 
-![my icon](/img/logo_light.svg)
+![my icon](/public/img/logo_light.svg)
