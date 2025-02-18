@@ -8,7 +8,7 @@ import CopyPlugin from "copy-webpack-plugin";
 
 // Local imports
 import { SiteContentPlugin } from "./plugin.js";
-import { CollectorPlugin } from "./core/plugin.js";
+import { CollectorPlugin } from "../core/plugin.js";
 import { loadSiteConfig } from "./loader.js";
 
 /**
