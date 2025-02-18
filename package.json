@@ -1,6 +1,6 @@
 {
   "name": "@uniwebcms/site-content-collector",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Collect and process website content from a folder structure",
   "type": "module",
   "main": "src/index.js",
