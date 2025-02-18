@@ -4,11 +4,7 @@ import { resolve } from "path";
 import { watch } from "fs";
 class SiteContentPlugin {
   constructor(options = {}) {
-    this.sourcePath = options.sourcePath;
-    if (!this.sourcePath) {
-      throw new Error("SiteContentPlugin requires a sourcePath option");
-    }
-
+    this.sourcePath = "./";
     this.injectToHtml = options.injectToHtml ?? false;
     this.variableName = options.variableName ?? "__SITE_CONTENT__";
     this.filename = options.filename ?? "site-content.json";

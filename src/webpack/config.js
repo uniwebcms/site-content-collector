@@ -139,7 +139,6 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
 
       // Process and inject site content
       new SiteContentPlugin({
-        sourcePath: "./pages", // Required: path to content directory
         injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
         variableName: "__SITE_CONTENT__", // Optional: global variable name when injecting
         filename: "site-content.json", // Optional: output filename when not injecting

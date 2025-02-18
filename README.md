@@ -65,7 +65,6 @@ import { SiteContentPlugin } from "@uniwebcms/site-content-collector/webpack";
 export default {
   plugins: [
     new SiteContentPlugin({
-      sourcePath: "./content/pages", // Required: path to content directory
       injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
       variableName: "__SITE_CONTENT__", // Optional: id/variable name when injecting
       filename: "site-content.json", // Optional: output filename
