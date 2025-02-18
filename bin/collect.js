@@ -30,10 +30,9 @@ export async function createCLI() {
         // Configure collector based on CLI options
         const config = {
           requireNumericPrefix: options.requirePrefix,
-          plugins: {
-            dataLoader: options.dataLoader !== false && {},
-            imageMeta: options.imageMeta !== false && {},
-          },
+          dataLoader: options.dataLoader !== false && {},
+          imageMeta: options.imageMeta !== false && {},
+          plugins: [],
         };
 
         if (options.verbose) {

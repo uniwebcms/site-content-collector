@@ -13,6 +13,7 @@ class SiteContentPlugin {
     this.variableName = options.variableName ?? "__SITE_CONTENT__";
     this.filename = options.filename ?? "site-content.json";
     this.injectFormat = options.injectFormat ?? "json"; // 'script' or 'json'
+    this.plugins = options.plugins; // custom user plugins
     this.watching = false;
   }
 
@@ -38,7 +39,8 @@ class SiteContentPlugin {
       async (params, callback) => {
         try {
           const sourcePath = resolve(compiler.context, this.sourcePath);
-          this.siteContent = await collectSiteContent(sourcePath);
+          const options = { plugins: this.plugins };
+          this.siteContent = await collectSiteContent(sourcePath, options);
           callback();
         } catch (err) {
           callback(err);

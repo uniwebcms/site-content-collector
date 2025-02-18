@@ -228,11 +228,11 @@ import { MyPlugin } from "site-collector-myplugin";
 
 // Method 1: Using createCollector
 const collector = createCollector({
-  plugins: {
-    myPlugin: {
+  plugins: [
+    new MyPlugin({
       option1: "value1",
-    },
-  },
+    }),
+  ],
 });
 
 // Method 2: Manual plugin registration

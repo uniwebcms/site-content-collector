@@ -17,25 +17,32 @@ export {
 export { ContentCollector, DataLoaderPlugin, ImageMetadataPlugin };
 
 // Create a pre-configured collector with default plugins
-export function createCollector(config = {}) {
+export function createCollector(options = {}) {
+  const { plugins = [], dataLoader = {}, imageMeta = {}, ...config } = options;
+
   const collector = new ContentCollector(config);
 
-  // Add built-in plugins if enabled in config
-  if (config.plugins?.dataLoader !== false) {
+  // Add built-in plugins if enabled in config (Note: {} evaluates to true)
+  if (dataLoader) {
     // Collects JSON data as dynamic into for page sections
-    collector.use(new DataLoaderPlugin(config.plugins?.dataLoader));
+    collector.use(new DataLoaderPlugin(dataLoader));
   }
 
-  if (config.plugins?.imageMeta !== false) {
+  if (imageMeta) {
     // Collects "sidecar" metadata for images
-    collector.use(new ImageMetadataPlugin(config.plugins?.imageMeta));
+    collector.use(new ImageMetadataPlugin(imageMeta));
+  }
+
+  // Add all other user plugins
+  for (const i of plugins) {
+    collector.use(plugins[i]);
   }
 
   return collector;
 }
 
 // Convenience function for simple usage
-export async function collectSiteContent(rootPath, config = {}) {
-  const collector = createCollector(config);
+export async function collectSiteContent(rootPath, options = {}) {
+  const collector = createCollector(options);
   return collector.collect(rootPath);
 }
