@@ -64,14 +64,20 @@ function getWebpackPlugins(props) {
       filename: "remoteEntry.js",
       exposes, //  For Module Federation Plugin to expose modules
       shared: {
-        react: { singleton: true, requiredVersion: "^18.2.0" },
+        react: {
+          singleton: true,
+          requiredVersion: "^18.2.0",
+          strictVersion: true,
+        },
         "react-dom": {
           singleton: true,
           requiredVersion: "^18.2.0",
+          strictVersion: true,
         },
         "react-router-dom": {
           singleton: true,
           requiredVersion: "^6.4.2",
+          strictVersion: true,
         },
       },
     }),
