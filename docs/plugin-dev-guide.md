@@ -223,7 +223,7 @@ export class APILoader extends LoaderPlugin {
 ### Usage in Code
 
 ```javascript
-import { createCollector } from "@uniwebcms/site-content-collector";
+import { createCollector } from "@uniwebcms/site-content-collector/sdk";
 import { MyPlugin } from "site-collector-myplugin";
 
 // Method 1: Using createCollector

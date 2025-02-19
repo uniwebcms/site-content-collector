@@ -508,7 +508,7 @@ function buildWebpackConfig(context) {
   };
 }
 
-function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
+function configModule(webpack, argv, importMetaUrl, userPlugins = []) {
   const { TARGET_MODULE = "*" } = process.env;
   const rootDir = dirname(fileURLToPath(importMetaUrl));
   const srcDir = resolve(rootDir, "src");
@@ -605,4 +605,4 @@ function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
   }
 }
 
-export { getConfig };
+export default configModule;

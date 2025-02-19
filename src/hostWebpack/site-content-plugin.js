@@ -1,5 +1,5 @@
 // src/webpack/plugin.js
-import { collectSiteContent } from "../index.js";
+import { collectSiteContent } from "../setup.js";
 import { resolve } from "path";
 import { watch } from "fs";
 

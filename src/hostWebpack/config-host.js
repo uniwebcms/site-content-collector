@@ -29,7 +29,7 @@ import { loadSiteConfig } from "./site-config-loader.js";
  *
  * @example
  * // webpack.config.js
- * import { getConfig } from "@uniwebcms/site-content-collector/webpack";
+ * import { configHost } from "@uniwebcms/site-content-collector/webpack";
  * import webpack from "webpack";
  * import { ImageOptimizerPlugin } from './plugins/image-optimizer';
  * import { CustomWebpackPlugin } from './plugins/webpack-plugin';
@@ -39,9 +39,9 @@ import { loadSiteConfig } from "./site-config-loader.js";
  *   new CustomWebpackPlugin()                   // Standard webpack plugin
  * ];
  *
- * export default async (_, argv) => getConfig(webpack, argv, import.meta.url, plugins);
+ * export default async (_, argv) => configHost(webpack, argv, import.meta.url, plugins);
  */
-async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
+async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
   // Validate inputs
   if (!Array.isArray(userPlugins)) {
     throw new Error("userPlugins must be an array");
@@ -206,4 +206,4 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
   };
 }
 
-export { getConfig, loadSiteConfig, SiteContentPlugin };
+export default configHost;

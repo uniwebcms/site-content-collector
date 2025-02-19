@@ -2,7 +2,7 @@
 import { Command } from "commander";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join, resolve, dirname, extname } from "node:path";
-import { createCollector } from "../index.js";
+import { createCollector } from "../src/setup.js";
 
 export async function createCLI() {
   const program = new Command();

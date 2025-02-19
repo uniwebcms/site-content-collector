@@ -6,9 +6,7 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./host": "./src/hostWebpack/config.js",
-    "./module": "./src/moduleWebpack/config.js",
-    "./plugins": "./src/plugins/index.js"
+    "./sdk": "./src/sdk.js"
   },
   "bin": {
     "collect-content": "./bin/collect-content.js"

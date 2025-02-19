@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { collectSiteContent } from "../src/index";
+import { collectSiteContent } from "../src/setup";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
