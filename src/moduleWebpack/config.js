@@ -1,4 +1,4 @@
-import { resolve, dirname } from "path";
+import { join, resolve, dirname } from "path";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
 import { URL, fileURLToPath } from "url";
@@ -76,7 +76,7 @@ function getWebpackPlugins(props) {
       },
     }),
     new YamlSchemaPlugin({
-      srcDir: "./src/" + moduleName,
+      srcDir: "src/" + moduleName,
       output: "schema.json",
     }),
     new CleanAndLogPlugin({
@@ -87,7 +87,7 @@ function getWebpackPlugins(props) {
     }),
     // Prod-mode needs manifest / Dev-mode needs compression
     mode !== "development"
-      ? new ManifestGeneratorPlugin({ srcDir: "./src/" + moduleName })
+      ? new ManifestGeneratorPlugin({ srcDir: "src/" + moduleName })
       : new CompressionPlugin({
           filename: "[path][base].gzip",
           algorithm: "gzip",
@@ -107,7 +107,7 @@ function constructWebpackConfig(props) {
     context,
     outputPath,
     publicPath,
-    DEV_SERVER_PORT,
+    serverPort,
     tailwindCssLoader,
     plugins,
     moduleName,
@@ -131,7 +131,16 @@ function constructWebpackConfig(props) {
       publicPath,
     },
     devServer: {
-      port: DEV_SERVER_PORT,
+      port: serverPort,
+      hot: true,
+      liveReload: true,
+      historyApiFallback: true,
+      static: {
+        directory: context.buildDevDir, //join(rootDir, "dist"),
+      },
+      devMiddleware: {
+        writeToDisk: true,
+      },
     },
     module: {
       rules: [
@@ -246,7 +255,7 @@ function constructWebpackConfig(props) {
 }
 
 function buildWebpackConfig(context) {
-  const { webpack, env, argv, rootDir, srcDir, distDir } = context;
+  const { webpack, env, argv, rootDir, srcDir, distDir, buildDevDir } = context;
   let uuid = uuidv4();
 
   let {
@@ -258,10 +267,11 @@ function buildWebpackConfig(context) {
     GH_PAGES_URL,
     REMOTE_TYPE,
     TARGET_MODULE = "*",
-    DEV_SERVER_PORT = 3005,
   } = env;
 
-  PUBLIC_URL ??= `http://localhost:${DEV_SERVER_PORT}`;
+  const serverPort = parseInt(argv.port) || env.DEV_SERVER_PORT || 3005;
+
+  PUBLIC_URL ??= `http://localhost:${serverPort}`;
 
   PUBLIC_URL = validUrl(PUBLIC_URL);
   CF_PAGES_URL = validUrl(CF_PAGES_URL);
@@ -275,7 +285,6 @@ function buildWebpackConfig(context) {
   const isTunnel = !!argv.env.tunnel;
   const isLocal = !!argv.env.local;
 
-  const buildDevDir = resolve(rootDir, "../build_dev");
   const buildProdDir = distDir;
 
   let prodPublicPath;
@@ -325,6 +334,8 @@ function buildWebpackConfig(context) {
 
   const FINAL_PUBLIC_URL = CF_PAGES_URL || GH_PAGES_URL || PUBLIC_URL;
 
+  console.log("npm_lifecycle_event:", npm_lifecycle_event);
+
   switch (npm_lifecycle_event) {
     case "build":
       if (mode === "development") {
@@ -350,8 +361,9 @@ function buildWebpackConfig(context) {
       devPublicPath = `${TUNNEL_URL}/${module}/${uuid}/`;
       dest = resolve(buildDevDir, module);
       break;
+    case "dev":
     case "watch:local":
-      devPublicPath = `http://localhost:${DEV_SERVER_PORT}/${module}/${uuid}/`;
+      devPublicPath = `http://localhost:${serverPort}/${module}/${uuid}/`;
       dest = resolve(buildDevDir, module);
       break;
     case "build:prod":
@@ -442,7 +454,7 @@ function buildWebpackConfig(context) {
         context,
         outputPath,
         publicPath,
-        DEV_SERVER_PORT,
+        serverPort,
         tailwindCssLoader,
         plugins,
         moduleName: module,
@@ -479,7 +491,7 @@ function buildWebpackConfig(context) {
       context,
       outputPath,
       publicPath,
-      DEV_SERVER_PORT,
+      serverPort,
       tailwindCssLoader,
       plugins,
       moduleName: module,
@@ -501,6 +513,7 @@ function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
   const rootDir = dirname(fileURLToPath(importMetaUrl));
   const srcDir = resolve(rootDir, "src");
   const distDir = resolve(rootDir, "dist");
+  const buildDevDir = resolve(rootDir, "build_dev");
 
   const context = {
     webpack,
@@ -509,6 +522,7 @@ function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
     rootDir,
     srcDir,
     distDir,
+    buildDevDir,
   };
 
   try {
@@ -539,7 +553,7 @@ function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
         else configs.push(config);
       }
 
-      return configs;
+      return configs[0];
     }
 
     let modules = TARGET_MODULE.split(",").filter(Boolean);

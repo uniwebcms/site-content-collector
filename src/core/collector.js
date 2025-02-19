@@ -67,11 +67,13 @@ export class ContentCollector {
 
   async #processRoot(rootPath) {
     const siteConfig = await readYamlFile(join(rootPath, "site.yml"));
+    const themeConfig = await readYamlFile(join(rootPath, "theme.yml"));
     const contentPath = join(rootPath, "pages"); // get relative contentPath instead?
 
     const output = {
-      config: siteConfig,
       pages: [],
+      config: siteConfig,
+      theme: themeConfig,
     };
 
     // Read directory entries
