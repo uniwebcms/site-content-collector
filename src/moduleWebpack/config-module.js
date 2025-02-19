@@ -7,7 +7,7 @@ import YamlSchemaPlugin from "./yaml-schema-plugin.js";
 import ManifestGeneratorPlugin from "./manifest-generator-plugin.js";
 import CleanAndLogPlugin from "./clean-and-log-plugin.js";
 import generateExports from "./generate-exports.js";
-import sass from "sass";
+import * as sass from "sass";
 import getTailwindCssLoader from "./tailwind-css-loader.js";
 
 function validUrl(url) {
