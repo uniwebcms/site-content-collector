@@ -1,0 +1,57 @@
+elementColumns:
+  $: Role
+  type: Element
+  layout: Layout
+  alignment: Alignment
+  description: Description
+
+propertyColumns:
+  $: Name
+  type: Type
+  enum: Enum
+  default: Default
+  description: Description
+
+elements:
+  background:
+    type: image
+    layout: ""
+    description: 
+      en: The background image.
+      fr: L'image d'arrière-plan.
+  pretitle:
+    type: H2
+    description: 
+      en: A phrase that precedes the main headline.
+      fr: Une phrase qui précède le titre principal.
+  title:
+    type: H1
+    alignment: ""
+    description: 
+      en: The main headline.
+      fr: Le titre principal.
+  subtitle:
+    type: H2
+    description: 
+      en: A phrase that follows the main headline.
+      fr: Une phrase qui suit le titre principal.
+  text:
+    type: paragraph
+    description: 
+      en: The body text.
+      fr: Le texte du corps.
+  media:
+    type: image, video
+    description: 
+      en: The primary visual content.
+      fr: Le contenu visuel principal.
+  link:
+    type: link
+    description: 
+      en: A link
+      fr: Un lien
+  card:
+    type: card
+    description: 
+      en: A card
+      fr: Une carte

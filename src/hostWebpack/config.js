@@ -7,9 +7,9 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 
 // Local imports
-import { SiteContentPlugin } from "./plugin.js";
+import { SiteContentPlugin } from "./site-content-plugin.js";
 import { CollectorPlugin } from "../core/plugin.js";
-import { loadSiteConfig } from "./loader.js";
+import { loadSiteConfig } from "./site-config-loader.js";
 
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
@@ -63,7 +63,7 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
   // Setup environment
   const isProduction = argv.mode === "production";
   const mode = isProduction ? "production" : "development";
-  const serverPort = parseInt(argv.port) || 3005;
+  const serverPort = parseInt(argv.port) || 3000;
 
   // Extract webpack plugins
   const { ModuleFederationPlugin } = webpack.container;
@@ -165,7 +165,10 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
           RemoteModule: `WebsiteRemote@${config.components.moduleUrl}/remoteEntry.js`,
         },
         shared: {
-          react: { singleton: true, requiredVersion: "^18.2.0" },
+          react: {
+            singleton: true,
+            requiredVersion: "^18.2.0",
+          },
           "react-dom": {
             singleton: true,
             requiredVersion: "^18.2.0",
@@ -178,7 +181,7 @@ async function getConfig(webpack, argv, importMetaUrl, userPlugins = []) {
       }),
 
       // Add user-provided webpack plugins
-      ...webpackPlugins,
+      // ...webpackPlugins,
     ],
     devServer: {
       historyApiFallback: true,

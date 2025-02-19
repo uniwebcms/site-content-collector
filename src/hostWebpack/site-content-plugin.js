@@ -2,6 +2,7 @@
 import { collectSiteContent } from "../index.js";
 import { resolve } from "path";
 import { watch } from "fs";
+
 class SiteContentPlugin {
   constructor(options = {}) {
     this.sourcePath = "./";

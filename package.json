@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./webpack": "./src/webpack/config.js",
+    "./host": "./src/hostWebpack/config.js",
+    "./module": "./src/moduleWebpack/config.js",
     "./plugins": "./src/plugins/index.js"
   },
   "bin": {
@@ -21,7 +22,16 @@
   "dependencies": {
     "@uniwebcms/content-reader": "^1.0.3",
     "commander": "^11.1.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "autoprefixer": "^10.4.13",
+    "compression-webpack-plugin": "^10.0.0",
+    "image-size": "^1.1.1",
+    "postcss-preset-env": "^7.8.3",
+    "sharp": "^0.33.5",
+    "uuid": "^9.0.0",
+    "sass": "^1.50.0",
+    "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
+    "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
