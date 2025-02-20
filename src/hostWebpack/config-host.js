@@ -98,7 +98,17 @@ async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
           use: {
             loader: "babel-loader",
             options: {
-              presets: ["@babel/preset-react"],
+              presets: ["@babel/preset-react", "@babel/preset-env"],
+            },
+          },
+        },
+        {
+          test: /\.jsx?$/,
+          include: [resolve(rootDir, "node_modules/@uniwebcms")],
+          use: {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-react", "@babel/preset-env"],
             },
           },
         },
