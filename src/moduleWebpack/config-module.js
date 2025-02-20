@@ -67,17 +67,17 @@ function getWebpackPlugins(props) {
         react: {
           singleton: true,
           requiredVersion: "^18.2.0",
-          strictVersion: true,
+          // strictVersion: true,
         },
         "react-dom": {
           singleton: true,
           requiredVersion: "^18.2.0",
-          strictVersion: true,
+          // strictVersion: true,
         },
         "react-router-dom": {
           singleton: true,
           requiredVersion: "^6.4.2",
-          strictVersion: true,
+          // strictVersion: true,
         },
       },
     }),
