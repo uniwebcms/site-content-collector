@@ -82,6 +82,8 @@ export class ContentCollector {
       throw err;
     });
 
+    const specials = ["header", "footer", "left", "right"];
+
     // Process each directory as a potential page
     await Promise.all(
       entries.map(async (entry) => {
@@ -92,11 +94,10 @@ export class ContentCollector {
 
         try {
           const page = await this.#processPage(path, entry);
-          if (page.route === "/") {
-            output.pages.unshift(page);
-          } else {
-            output.pages.push(page);
-          }
+          if (page.hidden) return;
+          const suffix = page.route.startsWith("/@") && page.route.slice(2);
+          if (suffix && specials.includes(suffix)) output[suffix] = page;
+          else output.pages.push(page);
         } catch (err) {
           this.#context.errors.push({
             page: entry,
@@ -136,7 +137,7 @@ export class ContentCollector {
     const subpages = await this.#processSubpages(pagePath);
 
     return {
-      route: "/" + (dirName === "home" ? "" : dirName),
+      route: "/" + dirName,
       ...pageMetadata,
       sections: hierarchy,
       ...(subpages.length > 0 && { subpages }),
@@ -154,7 +155,7 @@ export class ContentCollector {
       if (stats.isDirectory()) {
         try {
           const subpage = await this.#processPage(path, entry);
-          subpages.push(subpage);
+          if (!subpage.hidden) subpages.push(subpage);
         } catch (err) {
           this.#context.errors.push({
             page: entry,
@@ -175,6 +176,11 @@ export class ContentCollector {
 
     // Skip files without numeric prefix if required by config
     if (this.#context.config.requireNumericPrefix && !prefix) {
+      return null;
+    }
+
+    // Skip files that start with "_"
+    if (name.startsWith("_")) {
       return null;
     }
 
