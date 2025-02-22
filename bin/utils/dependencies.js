@@ -46,8 +46,13 @@ function validateWorkspaces(pkg) {
 
 /**
  * Initialize or update parent project dependencies
+ * @param {string} projectPath - Path to the project
+ * @param {Object} options - Options object
+ * @param {boolean} options.checkOnly - Only check for updates without modifying
+ * @param {boolean} options.force - Force update all dependencies to match peer versions
  */
-export async function initializeDependencies(projectPath) {
+export async function initializeDependencies(projectPath, options = {}) {
+  const { checkOnly = false, force = false } = options;
   const projectPkgPath = path.join(projectPath, "package.json");
 
   // Get our package's peer dependencies
@@ -58,8 +63,17 @@ export async function initializeDependencies(projectPath) {
   let projectPkg = await readPackageJson(projectPkgPath);
   const creating = !projectPkg;
 
+  if (creating && checkOnly) {
+    return {
+      needsUpdate: true,
+      missing: Object.entries(peerDeps).map(
+        ([name, version]) => `${name}@${version}`
+      ),
+      outdated: [],
+    };
+  }
+
   if (!projectPkg) {
-    // Create new package.json if it doesn't exist
     projectPkg = {
       name: path.basename(projectPath),
       version: "0.1.0",
@@ -79,17 +93,34 @@ export async function initializeDependencies(projectPath) {
   // Track what we're going to change
   const toAdd = [];
   const toUpdate = [];
+  const outdated = [];
+  const missing = [];
 
   // Check each peer dependency
   for (const [name, version] of Object.entries(peerDeps)) {
     if (!projectPkg.dependencies[name]) {
-      projectPkg.dependencies[name] = version;
-      toAdd.push(`${name}@${version}`);
+      missing.push(`${name}@${version}`);
+      if (!checkOnly) {
+        projectPkg.dependencies[name] = version;
+        toAdd.push(`${name}@${version}`);
+      }
     } else if (projectPkg.dependencies[name] !== version) {
       const oldVersion = projectPkg.dependencies[name];
-      projectPkg.dependencies[name] = version;
-      toUpdate.push(`${name}: ${oldVersion} → ${version}`);
+      outdated.push(`${name}: ${oldVersion} → ${version}`);
+      if (!checkOnly && (force || needsUpdate(oldVersion, version))) {
+        projectPkg.dependencies[name] = version;
+        toUpdate.push(`${name}: ${oldVersion} → ${version}`);
+      }
     }
+  }
+
+  // If only checking, return the status
+  if (checkOnly) {
+    return {
+      needsUpdate: missing.length > 0 || outdated.length > 0,
+      missing,
+      outdated,
+    };
   }
 
   // Check workspaces configuration
@@ -122,4 +153,27 @@ export async function initializeDependencies(projectPath) {
     added: toAdd,
     updated: toUpdate,
   };
+}
+
+/**
+ * Check if a version needs to be updated based on semver
+ * This is a simple implementation - you might want to use a proper semver library
+ */
+function needsUpdate(currentVersion, peerVersion) {
+  // Remove ^ or ~ from versions
+  const current = currentVersion.replace(/[\^~]/, "");
+  const peer = peerVersion.replace(/[\^~]/, "");
+
+  // Split into parts
+  const [currentMajor, currentMinor = 0, currentPatch = 0] = current
+    .split(".")
+    .map(Number);
+  const [peerMajor, peerMinor = 0, peerPatch = 0] = peer.split(".").map(Number);
+
+  // Compare versions
+  if (currentMajor !== peerMajor) return true;
+  if (currentMinor < peerMinor) return true;
+  if (currentMinor === peerMinor && currentPatch < peerPatch) return true;
+
+  return false;
 }
