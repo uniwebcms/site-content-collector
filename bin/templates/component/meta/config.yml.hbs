@@ -1,0 +1,9 @@
+label: {{name}}
+description: {{description}}
+export: {{isExported}}
+parameters:
+{{#each parameters}}
+  - name: {{name}}
+    type: {{type}}
+    label: {{label}}
+{{/each}}

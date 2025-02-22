@@ -559,7 +559,7 @@ function configModule(webpack, argv, importMetaUrl, userPlugins = []) {
         else configs.push(config);
       }
 
-      return configs[0];
+      return configs;
     }
 
     let modules = TARGET_MODULE.split(",").filter(Boolean);

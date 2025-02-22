@@ -185,31 +185,22 @@ const configBuilders = {
   },
 
   // Create output configuration
-  createOutputConfig: (moduleName, basePort, index, isSingleServer, env) => {
+  createOutputConfig: (moduleName, basePort, index, env) => {
     const port = basePort + (index || 0);
 
-    if (isSingleServer) {
-      return {
-        path: path.resolve(__dirname, "dist"),
-        filename: "[name]/[name].[contenthash].js",
-        publicPath: env.production ? "/" : `http://localhost:${basePort}/`,
-        clean: true,
-      };
-    } else {
-      const { outputPath } = moduleUtils.getModuleInfo(moduleName);
-      return {
-        path: outputPath,
-        filename: "[name].[contenthash].js",
-        publicPath: env.production
-          ? `/${moduleName}/`
-          : `http://localhost:${port}/`,
-        clean: true,
-      };
-    }
+    const { outputPath } = moduleUtils.getModuleInfo(moduleName);
+    return {
+      path: outputPath,
+      filename: "[name].[contenthash].js",
+      publicPath: env.production
+        ? `/${moduleName}/`
+        : `http://localhost:${port}/`,
+      clean: true,
+    };
   },
 
   // Create dev server configuration
-  createDevServerConfig: (modules, basePort, index, isSingleServer) => {
+  createDevServerConfig: (modules, basePort, index) => {
     const port = basePort + (index || 0);
 
     const baseDevServerConfig = {
@@ -229,94 +220,46 @@ const configBuilders = {
       open: env?.open || false,
     };
 
-    if (isSingleServer) {
-      // Create history API fallback rewrites for each module
-      const historyRewrites = modules.map((moduleName) => ({
-        from: new RegExp(`^/${moduleName}/`),
-        to: `/${moduleName}/index.html`,
-      }));
-
-      return {
-        ...baseDevServerConfig,
-        static: {
-          directory: path.resolve(__dirname, "dist"),
-          watch: true,
-        },
-        port: basePort,
-        historyApiFallback: { rewrites: historyRewrites },
-        setupExitSignals: true,
-        devMiddleware: {
-          publicPath: "/",
-          stats: "minimal",
-        },
-      };
-    } else {
-      const { outputPath } = moduleUtils.getModuleInfo(modules[0]);
-      return {
-        ...baseDevServerConfig,
-        static: {
-          directory: outputPath,
-          watch: true,
-        },
-        port,
-        historyApiFallback: true,
-        setupExitSignals: true,
-        devMiddleware: {
-          publicPath: "/",
-          stats: "minimal",
-        },
-      };
-    }
+    const { outputPath } = moduleUtils.getModuleInfo(modules[0]);
+    return {
+      ...baseDevServerConfig,
+      static: {
+        directory: outputPath,
+        watch: true,
+      },
+      port,
+      historyApiFallback: true,
+      setupExitSignals: true,
+      devMiddleware: {
+        publicPath: "/",
+        stats: "minimal",
+      },
+    };
   },
 
   // Create plugin configuration
-  createPlugins: (modules, basePort, isSingleServer, env) => {
+  createPlugins: (modules, basePort, env) => {
     const isProd = env.production === true;
 
     // Common plugins for both modes
     const commonPlugins = isProd
       ? [
           new MiniCssExtractPlugin({
-            filename: isSingleServer
-              ? "[name]/styles.[contenthash].css"
-              : "styles.[contenthash].css",
+            filename: "styles.[contenthash].css",
           }),
         ]
       : [];
 
-    if (isSingleServer) {
-      // Generate module federation and HTML plugins for all modules
-      const allPlugins = [...commonPlugins];
+    const moduleName = modules[0];
+    const index = 0;
+    const port = basePort + index;
+    const publicPath = isProd ? `/${moduleName}/` : `http://localhost:${port}/`;
 
-      modules.forEach((moduleName) => {
-        // Add federation plugin
-        allPlugins.push(
-          pluginFactory.createFederationPlugin(
-            moduleName,
-            isProd ? "/" : `http://localhost:${basePort}/`,
-            true
-          )
-        );
-
-        // Add HTML plugin
-        allPlugins.push(pluginFactory.createHtmlPlugin(moduleName, true));
-      });
-
-      return allPlugins;
-    } else {
-      const moduleName = modules[0];
-      const index = 0;
-      const port = basePort + index;
-      const publicPath = isProd
-        ? `/${moduleName}/`
-        : `http://localhost:${port}/`;
-
-      return [
-        ...commonPlugins,
-        pluginFactory.createFederationPlugin(moduleName, publicPath),
-        pluginFactory.createHtmlPlugin(moduleName),
-      ];
-    }
+    return [
+      ...commonPlugins,
+      pluginFactory.createFederationPlugin(moduleName, publicPath),
+      pluginFactory.createHtmlPlugin(moduleName),
+    ];
   },
 };
 
@@ -325,18 +268,13 @@ const configBuilders = {
  */
 const pluginFactory = {
   // Create ModuleFederationPlugin
-  createFederationPlugin: (moduleName, publicPath, isSingleServer = false) => {
+  createFederationPlugin: (moduleName, publicPath = false) => {
     const { packageJson } = moduleUtils.getModuleInfo(moduleName);
 
     return new ModuleFederationPlugin({
       name: moduleName,
-      filename: isSingleServer
-        ? `${moduleName}/remoteEntry.js`
-        : "remoteEntry.js",
-      exposes: moduleUtils.getExposedComponents(
-        moduleName,
-        isSingleServer ? moduleName : ""
-      ),
+      filename: "remoteEntry.js",
+      exposes: moduleUtils.getExposedComponents(moduleName),
       shared: {
         react: {
           singleton: true,
@@ -351,13 +289,13 @@ const pluginFactory = {
   },
 
   // Create HtmlWebpackPlugin
-  createHtmlPlugin: (moduleName, isSingleServer = false) => {
+  createHtmlPlugin: (moduleName) => {
     const { templatePath } = moduleUtils.getModuleInfo(moduleName);
 
     return new HtmlWebpackPlugin({
       template: templatePath,
-      filename: isSingleServer ? `${moduleName}/index.html` : "index.html",
-      chunks: isSingleServer ? [moduleName] : undefined,
+      filename: "index.html",
+      // chunks: undefined,
     });
   },
 };
@@ -365,7 +303,7 @@ const pluginFactory = {
 /**
  * Main Configuration Factory
  */
-const createWebpackConfig = (modules, isSingleServer, env, basePort = 8080) => {
+const createWebpackConfig = (modules, env, basePort = 8080) => {
   const baseConfig = configBuilders.createBaseConfig(env);
   const isProd = env.production === true;
 
@@ -406,61 +344,32 @@ const createWebpackConfig = (modules, isSingleServer, env, basePort = 8080) => {
         },
       };
 
-  if (isSingleServer) {
+  return modules.map((moduleName, index) => {
+    const { entryPath } = moduleUtils.getModuleInfo(moduleName);
+
     return {
       ...baseConfig,
-      entry: moduleUtils.getAllEntries(modules),
+      name: moduleName,
+      entry: entryPath,
       output: configBuilders.createOutputConfig(
-        null,
+        moduleName,
         basePort,
-        null,
-        true,
+        index,
+        false,
         env
       ),
       devServer: configBuilders.createDevServerConfig(
-        modules,
+        [moduleName],
         basePort,
-        null,
-        true,
+        index,
+        false,
         env
       ),
-      plugins: configBuilders.createPlugins(modules, basePort, true, env),
+      plugins: configBuilders.createPlugins([moduleName], basePort, false, env),
       ...productionOptimizations,
       stats: isProd ? "normal" : "minimal",
     };
-  } else {
-    return modules.map((moduleName, index) => {
-      const { entryPath } = moduleUtils.getModuleInfo(moduleName);
-
-      return {
-        ...baseConfig,
-        name: moduleName,
-        entry: entryPath,
-        output: configBuilders.createOutputConfig(
-          moduleName,
-          basePort,
-          index,
-          false,
-          env
-        ),
-        devServer: configBuilders.createDevServerConfig(
-          [moduleName],
-          basePort,
-          index,
-          false,
-          env
-        ),
-        plugins: configBuilders.createPlugins(
-          [moduleName],
-          basePort,
-          false,
-          env
-        ),
-        ...productionOptimizations,
-        stats: isProd ? "normal" : "minimal",
-      };
-    });
-  }
+  });
 };
 
 /**
@@ -468,11 +377,9 @@ const createWebpackConfig = (modules, isSingleServer, env, basePort = 8080) => {
  */
 const webpackConfig = (env = {}) => {
   const modules = env.module ? [env.module] : moduleUtils.getModuleFolders();
-  const isSingleServer =
-    env.singleServer === "true" || env.singleServer === true;
   const basePort = env.port ? parseInt(env.port) : 8080;
 
-  return createWebpackConfig(modules, isSingleServer, env, basePort);
+  return createWebpackConfig(modules, env, basePort);
 };
 
 export default webpackConfig;
