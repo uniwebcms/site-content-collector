@@ -1,0 +1,203 @@
+colors:
+  light:
+    primary: "#f97316"
+    secondary: "#3b82f6"
+    accent: ""
+    neutral: ""
+  medium:
+    primary: "#f78c06"
+    secondary: "#41a5ee"
+    accent: "#655de8"
+    neutral: "#000000"
+  dark:
+    primary: "#f78c06"
+    secondary: "#41a5ee"
+    accent: "#655de8"
+    neutral: "#000000"
+elements:
+  light:
+    text-color: rgba(0,0,0, 1)
+    bg-color: rgba(255,255,255, 1)
+    heading-color: rgba(0,0,0, 1)
+    link-color: rgba(var(--neutral-950) / 1.00)
+    link-hover-color: rgba(var(--neutral-950) / 1.00)
+    icon-color: ""
+    btn-color: rgba(24,59,221,1)
+    btn-text-color: rgba(255,255,255, 1)
+    btn-alt-text-color: rgba(24,59,221,1)
+    btn-hover-text-color: rgba(255,255,255, 1)
+    btn-hover-color: rgba(56,83,216,1)
+  medium:
+    text-color: rgba(0,0,0, 1)
+    bg-color: rgba(255,243,226,1)
+    heading-color: rgba(0,0,0, 1)
+    link-color: "#172554"
+    icon-color: ""
+    link-hover-color: "#1e3a8a"
+    btn-color: rgba(32,86,240,1.00)
+    btn-hover-text-color: rgba(var(--neutral-500) / 1.00)
+    btn-hover-color: rgba(65,105,225,1.00)
+  dark:
+    text-color: rgba(255,255,255,1.00)
+    bg-color: rgba(var(--neutral-950) / 1.00)
+    heading-color: rgba(255,255,255,1.00)
+    link-color: rgba(var(--neutral-50) / 1.00)
+    icon-color: ""
+    link-hover-color: rgba(var(--neutral-50) / 1.00)
+    btn-color: rgba(190,216,255,1.00)
+    btn-hover-text-color: rgba(var(--neutral-900) / 1.00)
+    btn-hover-color: rgba(65,105,225,1.00)
+  _config:
+    dark:
+      text-color: ""
+      bg-color: manual
+    medium:
+      text-color: manual
+      heading-color: manual
+      link-color: manual
+      bg-color: manual
+      link-hover-color: manual
+name: Uniweb
+fonts:
+  heading: ""
+  body: ""
+importedFonts: undefined
+baseColorId: basecolors-1733424692246-acpvxkyel
+src: "30"
+vars:
+  light:
+    "--primary-50": 255 247 237
+    "--primary-100": 255 237 213
+    "--primary-200": 254 215 170
+    "--primary-300": 253 186 116
+    "--primary-400": 251 146 60
+    "--primary-500": 249 115 22
+    "--primary-600": 234 88 12
+    "--primary-700": 194 65 12
+    "--primary-800": 154 52 18
+    "--primary-900": 124 45 18
+    "--primary-950": 67 20 7
+    "--secondary-50": 239 246 255
+    "--secondary-100": 219 234 254
+    "--secondary-200": 191 219 254
+    "--secondary-300": 147 197 253
+    "--secondary-400": 96 165 250
+    "--secondary-500": 59 130 246
+    "--secondary-600": 37 99 235
+    "--secondary-700": 29 78 216
+    "--secondary-800": 30 64 175
+    "--secondary-900": 30 58 138
+    "--secondary-950": 23 37 84
+    "--accent-50": ""
+    "--accent-100": ""
+    "--accent-200": ""
+    "--accent-300": ""
+    "--accent-400": ""
+    "--accent-500": ""
+    "--accent-600": ""
+    "--accent-700": ""
+    "--accent-800": ""
+    "--accent-900": ""
+    "--accent-950": ""
+    "--neutral-50": ""
+    "--neutral-100": ""
+    "--neutral-200": ""
+    "--neutral-300": ""
+    "--neutral-400": ""
+    "--neutral-500": ""
+    "--neutral-600": ""
+    "--neutral-700": ""
+    "--neutral-800": ""
+    "--neutral-900": ""
+    "--neutral-950": ""
+  medium:
+    "--primary-50": 255 251 236
+    "--primary-100": 255 247 211
+    "--primary-200": 255 235 165
+    "--primary-300": 255 218 109
+    "--primary-400": 255 191 50
+    "--primary-500": 255 167 10
+    "--primary-600": 255 144 0
+    "--primary-700": 204 106 2
+    "--primary-800": 161 81 11
+    "--primary-900": 130 68 12
+    "--primary-950": 70 33 4
+    "--secondary-50": 241 249 254
+    "--secondary-100": 226 241 252
+    "--secondary-200": 191 226 248
+    "--secondary-300": 135 204 242
+    "--secondary-400": 69 177 232
+    "--secondary-500": 32 152 215
+    "--secondary-600": 18 122 183
+    "--secondary-700": 16 97 148
+    "--secondary-800": 17 83 123
+    "--secondary-900": 20 70 102
+    "--secondary-950": 13 44 68
+    "--accent-50": 241 244 253
+    "--accent-100": 223 231 250
+    "--accent-200": 197 213 248
+    "--accent-300": 158 187 242
+    "--accent-400": 112 151 234
+    "--accent-500": 65 105 225
+    "--accent-600": 57 87 215
+    "--accent-700": 48 68 197
+    "--accent-800": 45 57 160
+    "--accent-900": 41 52 127
+    "--accent-950": 29 34 78
+    "--neutral-50": 246 246 246
+    "--neutral-100": 231 231 231
+    "--neutral-200": 209 209 209
+    "--neutral-300": 176 176 176
+    "--neutral-400": 136 136 136
+    "--neutral-500": 109 109 109
+    "--neutral-600": 93 93 93
+    "--neutral-700": 79 79 79
+    "--neutral-800": 69 69 69
+    "--neutral-900": 61 61 61
+    "--neutral-950": 0 0 0
+  dark:
+    "--primary-50": 255 251 236
+    "--primary-100": 255 247 211
+    "--primary-200": 255 235 165
+    "--primary-300": 255 218 109
+    "--primary-400": 255 191 50
+    "--primary-500": 255 167 10
+    "--primary-600": 255 144 0
+    "--primary-700": 204 106 2
+    "--primary-800": 161 81 11
+    "--primary-900": 130 68 12
+    "--primary-950": 70 33 4
+    "--secondary-50": 241 249 254
+    "--secondary-100": 226 241 252
+    "--secondary-200": 191 226 248
+    "--secondary-300": 135 204 242
+    "--secondary-400": 69 177 232
+    "--secondary-500": 32 152 215
+    "--secondary-600": 18 122 183
+    "--secondary-700": 16 97 148
+    "--secondary-800": 17 83 123
+    "--secondary-900": 20 70 102
+    "--secondary-950": 13 44 68
+    "--accent-50": 241 244 253
+    "--accent-100": 223 231 250
+    "--accent-200": 197 213 248
+    "--accent-300": 158 187 242
+    "--accent-400": 112 151 234
+    "--accent-500": 65 105 225
+    "--accent-600": 57 87 215
+    "--accent-700": 48 68 197
+    "--accent-800": 45 57 160
+    "--accent-900": 41 52 127
+    "--accent-950": 29 34 78
+    "--neutral-50": 246 246 246
+    "--neutral-100": 231 231 231
+    "--neutral-200": 209 209 209
+    "--neutral-300": 176 176 176
+    "--neutral-400": 136 136 136
+    "--neutral-500": 109 109 109
+    "--neutral-600": 93 93 93
+    "--neutral-700": 79 79 79
+    "--neutral-800": 69 69 69
+    "--neutral-900": 61 61 61
+    "--neutral-950": 0 0 0
+id: custom

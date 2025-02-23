@@ -4,22 +4,67 @@ import path from "node:path";
 import { logger } from "./logger.js";
 
 /**
- * Generate a unique site ID based on existing sites
- * @param {string[]} existingSites Array of existing site names
- * @returns {number} Next available site number
+ * Finds the maximum numeric suffix used in filenames or folder names matching
+ * the given prefix and optional extension in the specified directory.
+ * Returns 1 if no matching items are found.
+ *
+ * @param {string} directory - The directory path to search in
+ * @param {string} prefix - The filename/folder prefix to match
+ * @param {string} [extension] - Optional file extension (with or without leading dot)
+ * @returns {Promise<number>} - The maximum suffix found, or 1 if no matches
+ * @throws {Error} - If directory doesn't exist or other filesystem errors
  */
-export function generateSiteId(existingSites) {
-  if (!existingSites.length) return 1;
+export async function findMaxSuffix(directory, prefix, extension = null) {
+  try {
+    // Read all items in the directory
+    const items = await fs.readdir(directory);
 
-  const numbers = existingSites
-    .map((name) => {
-      const match = name.match(/site(\d+)/);
-      return match ? parseInt(match[1]) : 0;
-    })
-    .filter((num) => !isNaN(num));
+    // Create regex pattern based on whether extension is provided
+    let pattern;
+    if (extension) {
+      // For files with extension
+      const ext = extension.startsWith(".") ? extension : `.${extension}`;
+      pattern = new RegExp(`^${prefix}(\\d+)${ext.replace(".", "\\.")}$`);
+    } else {
+      // For folders or files without extension
+      pattern = new RegExp(`^${prefix}(\\d+)$`);
+    }
 
-  return numbers.length ? Math.max(...numbers) + 1 : 1;
+    // Find all matching suffixes and convert to numbers
+    const suffixes = items
+      .map((itemName) => {
+        const match = itemName.match(pattern);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((suffix) => suffix !== null);
+
+    // Return maximum suffix found or 1 if no matches
+    return suffixes.length > 0 ? Math.max(...suffixes) : 1;
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      throw new Error(`Directory not found: ${directory}`);
+    }
+    throw error; // Re-throw other errors
+  }
 }
+
+// /**
+//  * Generate a unique site ID based on existing sites
+//  * @param {string[]} existingSites Array of existing site names
+//  * @returns {number} Next available site number
+//  */
+// export function generateSiteId(existingSites) {
+//   if (!existingSites.length) return 1;
+
+//   const numbers = existingSites
+//     .map((name) => {
+//       const match = name.match(/site(\d+)/);
+//       return match ? parseInt(match[1]) : 0;
+//     })
+//     .filter((num) => !isNaN(num));
+
+//   return numbers.length ? Math.max(...numbers) + 1 : 1;
+// }
 
 /**
  * Validate site name according to naming rules

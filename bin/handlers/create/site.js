@@ -6,8 +6,8 @@ import ora from "ora";
 import inquirer from "inquirer";
 import { fileURLToPath } from "node:url";
 import {
-  generateSiteId,
   copyTemplateFiles,
+  findMaxSuffix,
   validateSiteName,
 } from "../../utils/site-utils.js";
 import { applyTemplate, TEMPLATE_TYPES } from "../../utils/templates.js";
@@ -32,9 +32,8 @@ export async function createSiteHandler(name, options = {}) {
   // If no name provided, generate one
   let siteName = name;
   if (!siteName) {
-    const existingSites = await getExistingSites(targetPath);
-    const nextId = generateSiteId(existingSites);
-    siteName = `site${nextId}`;
+    const maxId = await findMaxSuffix(targetPath, "site");
+    siteName = `site${maxId + 1}`;
     logger.info(
       `No site name provided, using generated name: ${chalk.cyan(siteName)}`
     );
@@ -90,7 +89,7 @@ export async function createSiteHandler(name, options = {}) {
     }
 
     // Create directory
-    await fs.mkdir(sitePath, { recursive: true });
+    // await fs.mkdir(sitePath, { recursive: true });
 
     // Copy template files
     // if (options.template) {

@@ -1,0 +1,4 @@
+components:
+  url: https://uniwebcms.github.io
+  module: AcademicModules/M1
+  version: latest # or specific hash
