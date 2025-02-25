@@ -19,22 +19,19 @@ import YamlSchemaPlugin from "./yaml-schema-plugin.js";
 import ManifestGeneratorPlugin from "./manifest-generator-plugin.js";
 import CleanAndLogPlugin from "./clean-and-log-plugin.js";
 
-import { BUILD_MODES, WEBPACK, FILES, PATHS } from "./constants.js";
+import { BUILD_MODES, WEBPACK, FILES, PATHS } from "../constants.js";
 
 /**
  * Create Module Federation plugin configuration
  * @param {Object} options - Plugin options
  * @returns {Object} Configured plugin
  */
-function createModuleFederationPlugin({
-  moduleName,
-  exposes,
-  packageJson = {},
-}) {
-  const { ModuleFederationPlugin } = webpack.container;
+function createModuleFederationPlugin(moduleInfo, context) {
+  const { exposes, packageJson } = moduleInfo;
+  const { ModuleFederationPlugin } = context.webpack.container;
 
   return new ModuleFederationPlugin({
-    name: moduleName,
+    name: moduleInfo.name,
     filename: FILES.REMOTE_ENTRY,
     exposes,
     shared: {
@@ -66,27 +63,25 @@ function createModuleFederationPlugin({
  * @returns {Array} Array of webpack plugins
  */
 function createCommonPlugins({
-  moduleName,
-  srcDir,
+  moduleInfo,
+  context,
   publicPath,
   outputPath,
   buildId,
-  exposes,
-  packageJson,
 }) {
   return [
     // Module Federation setup
-    createModuleFederationPlugin({ moduleName, exposes, packageJson }),
+    createModuleFederationPlugin(moduleInfo, context),
 
     // // Generate HTML entry point
     // new HtmlWebpackPlugin({
-    //   template: path.join(srcDir, moduleName, "index.html"),
+    //   template: path.join(srcDir, moduleInfo.name, "index.html"),
     //   filename: "index.html",
     // }),
 
     // Generate schema for module configuration
     new YamlSchemaPlugin({
-      srcDir: path.join(PATHS.SRC, moduleName),
+      srcDir: moduleInfo.modulePath,
       output: "schema.json",
     }),
 
@@ -105,11 +100,11 @@ function createCommonPlugins({
  * @param {Object} options - Plugin options
  * @returns {Array} Array of webpack plugins
  */
-function createProductionPlugins({ moduleName }) {
+function createProductionPlugins(moduleInfo) {
   return [
     // Generate manifest for deployment
     new ManifestGeneratorPlugin({
-      srcDir: path.join(PATHS.SRC, moduleName),
+      srcDir: moduleInfo.modulePath,
     }),
 
     // Extract and optimize CSS
@@ -173,18 +168,16 @@ function createDevelopmentPlugins() {
  */
 export function getPlugins({
   mode,
-  moduleName,
-  srcDir,
+  moduleInfo,
+  context,
   publicPath,
   outputPath,
   buildId,
-  exposes,
-  packageJson,
   userPlugins = [],
 }) {
   const commonPlugins = createCommonPlugins({
-    moduleName,
-    srcDir,
+    moduleInfo,
+    context,
     publicPath,
     outputPath,
     buildId,
@@ -194,7 +187,7 @@ export function getPlugins({
 
   const modeSpecificPlugins =
     mode === BUILD_MODES.PRODUCTION
-      ? createProductionPlugins({ moduleName })
+      ? createProductionPlugins(moduleInfo)
       : createDevelopmentPlugins();
 
   return [...commonPlugins, ...modeSpecificPlugins, ...userPlugins];

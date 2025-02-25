@@ -19,7 +19,7 @@ import {
   ERRORS,
   DEFAULTS,
   LIFECYCLE_EVENTS,
-} from "./constants.js";
+} from "../constants.js";
 
 /**
  * Validates and normalizes URLs
@@ -44,7 +44,9 @@ function validUrl(url) {
  * @param {Object} options - Directory options
  * @returns {string} Base directory path
  */
-function getBaseDirectory({ lifecycleEvent, mode, distDir, buildDevDir }) {
+function getBaseDirectory(context) {
+  const { lifecycleEvent, mode, distDir, buildDevDir } = context;
+
   switch (lifecycleEvent) {
     case LIFECYCLE_EVENTS.BUILD:
     case LIFECYCLE_EVENTS.BUILD_DEV:
@@ -111,14 +113,17 @@ function getPublicPath({
 
   // Production mode - use Cloudflare, GitHub Pages, or custom URL
   if (mode === BUILD_MODES.PRODUCTION) {
-    const publicUrl =
+    let publicUrl =
       validUrl(env.CF_PAGES_URL) ||
       validUrl(env.GH_PAGES_URL) ||
       validUrl(env.PUBLIC_URL);
 
     if (!publicUrl) {
-      throw new Error(ERRORS.NO_PUBLIC_URL);
+      // context.serverPort
+      publicUrl = `http://localhost:${env.port || 3000}`;
+      // throw new Error(ERRORS.NO_PUBLIC_URL);
     }
+    console.log("publicUrl:", publicUrl);
 
     return `${publicUrl}/${modulePathSegment}`;
   }
@@ -142,12 +147,12 @@ function getPublicPath({
  * @param {Object} options - Output options
  * @returns {Object} Output path configuration
  */
-function getOutputPath({ baseDir, moduleName, buildId, variant = "" }) {
+function getOutputPath({ baseDir, moduleInfo, buildId, variant = "" }) {
   const moduleDir = path.resolve(baseDir, moduleName);
   const variantPath = variant ? `_${variant}` : "";
 
   return {
-    path: path.resolve(moduleDir, `${buildId}${variantPath}`),
+    path: path.join(moduleInfo.modulePath, `${buildId}${variantPath}`),
     moduleDir,
   };
 }
@@ -157,14 +162,14 @@ function getOutputPath({ baseDir, moduleName, buildId, variant = "" }) {
  * @param {Object} options - Configuration options
  * @returns {Object} Complete path configuration
  */
-export function getPathConfig(options) {
-  const baseDir = getBaseDirectory(options);
-  const { path: outputPath, moduleDir } = getOutputPath({
-    baseDir,
-    moduleName: options.moduleName,
-    buildId: options.buildId,
-    variant: options.variant,
-  });
+export function getPathConfig({ moduleInfo, context, buildId, variant }) {
+  const baseDir = getBaseDirectory(context);
+  const variantPath = variant ? `_${variant}` : "";
+
+  const outputPath = path.join(
+    moduleInfo.modulePath,
+    `${buildId}${variantPath}`
+  );
 
   const publicPath = getPublicPath({
     ...options,
@@ -174,7 +179,6 @@ export function getPathConfig(options) {
   return {
     baseDir,
     outputPath,
-    moduleDir,
     publicPath,
   };
 }
@@ -185,5 +189,4 @@ export default {
   getBaseDirectory,
   getTunnelUrl,
   getPublicPath,
-  getOutputPath,
 };

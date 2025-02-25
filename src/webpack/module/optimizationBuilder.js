@@ -12,7 +12,7 @@ import path from "path";
 import TerserPlugin from "terser-webpack-plugin";
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 
-import { BUILD_MODES, WEBPACK, PATHS } from "./constants.js";
+import { BUILD_MODES, WEBPACK, PATHS } from "../constants.js";
 
 /**
  * Configure code splitting optimization

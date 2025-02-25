@@ -8,7 +8,7 @@
  * - Security and CORS settings
  */
 
-import { PATHS, DEFAULTS, BUILD_MODES } from "./constants.js";
+import { PATHS, DEFAULTS, BUILD_MODES } from "../constants.js";
 
 /**
  * Configure static file serving

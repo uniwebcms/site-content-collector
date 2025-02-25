@@ -42,6 +42,8 @@ export const FILES = {
   PACKAGE_JSON: "package.json",
   TUNNEL_URL: "quick-tunnel.txt",
   REMOTE_ENTRY: "remoteEntry.js",
+  MODULE_CONFIG: "module.yml",
+  SITE_CONFIG: "site.yml",
 };
 
 // Webpack Specific

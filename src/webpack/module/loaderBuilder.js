@@ -10,7 +10,7 @@
 
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import * as sass from "sass";
-import { BUILD_MODES, EXTENSIONS, PATHS } from "./constants.js";
+import { BUILD_MODES, EXTENSIONS, PATHS } from "../constants.js";
 
 /**
  * Create JavaScript/React loader configuration
@@ -37,10 +37,14 @@ function createJavaScriptLoader() {
 
 /**
  * Create CSS loader configuration with optional Tailwind
- * @param {Object} options Loader options
+ * @param {Object} moduleInfo Module information
+ * @param {Object} context Build context
  * @returns {Object} Webpack loader configuration
  */
-function createCssLoader({ isProduction, tailwindConfig = null }) {
+function createCssLoader(moduleInfo, context) {
+  const { tailwindConfig } = moduleInfo;
+  const { isProduction } = context;
+
   const loaders = [
     isProduction ? MiniCssExtractPlugin.loader : "style-loader",
     {
@@ -214,7 +218,10 @@ function getTailwindLoader(configPath) {
  * @param {Object} options Configuration options
  * @returns {Array} Array of webpack loader rules
  */
-export function getLoaderRules({ isProduction, tailwindConfig }) {
+export function getLoaderRules(moduleInfo, context) {
+  const { tailwindConfig } = moduleInfo;
+  const { isProduction } = context;
+
   return [
     createJavaScriptLoader(),
     createCssLoader({ isProduction, tailwindConfig }),

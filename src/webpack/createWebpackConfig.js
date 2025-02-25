@@ -7,219 +7,242 @@
 
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from "url";
 
-import moduleUtils from "./config/moduleUtils.js";
-import pluginBuilder from "./config/pluginBuilder.js";
-import loaderBuilder from "./config/loaderBuilder.js";
-import pathBuilder from "./config/pathBuilder.js";
-import optimizationBuilder from "./config/optimizationBuilder.js";
-import devServerBuilder from "./config/devServerBuilder.js";
-
-import { BUILD_MODES, PATHS, ERRORS } from "./constants.js";
-
-/**
- * Creates a webpack configuration for a single module variant
- * @param {Object} params Build parameters
- * @returns {Object} Webpack configuration
- */
-function createVariantConfig({
-  moduleName,
-  context,
-  buildId,
-  variant = "",
-  tailwindConfig = null,
-}) {
-  const { webpack, env, argv, rootDir, srcDir } = context;
-  const mode =
-    argv.mode ||
-    (env.CF_PAGES_BRANCH === "main"
-      ? BUILD_MODES.PRODUCTION
-      : BUILD_MODES.DEVELOPMENT);
-  const isProduction = mode === BUILD_MODES.PRODUCTION;
-
-  // Get paths configuration
-  const paths = pathBuilder.getPathConfig({
-    mode,
-    moduleName,
-    buildId,
-    variant,
-    env,
-    argv,
-    ...context,
-    lifecycleEvent: env.npm_lifecycle_event,
-  });
-
-  // Get module information and exposed components
-  const moduleInfo = moduleUtils.getModuleInfo(srcDir, moduleName);
-  const exposes = moduleUtils.getModuleFederationExposes(srcDir, moduleName);
-
-  return {
-    name: variant ? `${moduleName}-${variant}` : moduleName,
-    mode,
-
-    // Entry configuration
-    entry: moduleInfo.entryPath,
-
-    // Output configuration
-    output: {
-      path: paths.outputPath,
-      publicPath: paths.publicPath,
-      filename: "[name].[contenthash].js",
-      clean: true,
-    },
-
-    // Module resolution
-    resolve: {
-      extensions: [".jsx", ".js", ".json"],
-      alias: {
-        "@": srcDir,
-      },
-    },
-
-    // Loaders
-    module: {
-      rules: loaderBuilder.getLoaderRules({
-        isProduction,
-        tailwindConfig,
-      }),
-    },
-
-    // Plugins
-    plugins: pluginBuilder.getPlugins({
-      mode,
-      moduleName,
-      srcDir,
-      publicPath: paths.publicPath,
-      outputPath: paths.outputPath,
-      buildId,
-      exposes,
-      packageJson: moduleInfo.packageJson,
-      variant,
-      userPlugins: context.userPlugins,
-    }),
-
-    // Optimization and performance
-    ...optimizationBuilder.getBuildOptimizations({
-      mode,
-      rootDir,
-      configPath: moduleInfo.entryPath,
-    }),
-
-    // Development server
-    ...(isProduction
-      ? {}
-      : {
-          devServer: devServerBuilder.getDevServerConfig({
-            port: parseInt(argv.port) || env.DEV_SERVER_PORT,
-            buildDevDir: context.buildDevDir,
-            publicPath: paths.publicPath,
-          }),
-        }),
-
-    // Build reporting
-    stats: isProduction ? "normal" : "minimal",
-  };
-}
+import moduleUtils from "./module/moduleUtils.js";
+import siteUtils from "./site/siteUtils.js";
+import createModuleConfig from "./module/moduleConfig.js";
+import createSiteConfig from "./site/siteConfig.js";
+import { PATHS, BUILD_MODES } from "./constants.js";
+import { readConfigFile, normalizeUrl } from "./fileUtils.js";
 
 /**
  * Creates a webpack configuration for a module
- * @param {Object} params Module parameters
+ * @param {Object} moduleInfo Module info
+ * @param {Object} context Build context
  * @returns {Object|Array} Webpack configuration(s)
  */
-function buildModuleConfig({ moduleName, context }) {
-  // Generate unique build identifier
+function buildModuleVariantConfig(moduleInfo, context) {
+  // Generate unique build identifier for each module
   const buildId = uuidv4();
 
-  // Validate module
-  moduleUtils.validateModule(context.srcDir, moduleName);
-
-  // Get Tailwind configurations
-  const tailwindConfigs = moduleUtils.findTailwindConfigFiles(
-    path.resolve(context.srcDir, moduleName)
-  );
-
   // Create configurations for each Tailwind variant (or single config if no variants)
-  const configs = (
-    tailwindConfigs.length > 1 ? tailwindConfigs : [{ path: null, kind: "" }]
-  ).map(({ path: tailwindConfig, kind: variant }) =>
-    createVariantConfig({
-      moduleName,
+  if (moduleInfo.tailwindConfigs.length <= 1)
+    return createModuleConfig({ ...moduleInfo, buildId }, context);
+
+  return moduleInfo.tailwindConfigs.map(({ path, kind }) =>
+    createModuleConfig({
+      moduleInfo: {
+        ...moduleInfo,
+        buildId,
+        variant,
+        tailwindConfig: path,
+        variant: kind,
+      },
       context,
-      buildId,
-      variant,
-      tailwindConfig,
     })
   );
-
-  return configs.length === 1 ? configs[0] : configs;
 }
 
-/**
- * Determines which modules to build based on target and available modules
- * @param {string} targetModule - Target module specification
- * @param {string} srcDir - Source directory
- * @returns {string[]} Array of module names to build
- * @throws {Error} If no modules are available
- */
-function getModulesToBuild(targetModule, srcDir) {
-  // Get all available modules
-  const availableModules = moduleUtils.findModules(srcDir);
-  if (!availableModules.length) {
-    throw new Error(ERRORS.NO_MODULES);
-  }
+function buildModuleConfigs(context) {
+  const targetModule =
+    context.env.TARGET_MODULES || context.env.TARGET_MODULE || "*";
 
-  // Case 1: Build all modules
-  if (targetModule === "*") {
-    console.log("Building all modules...\n");
-    return availableModules;
-  }
+  // Determine which modules to build
+  const modules = moduleUtils.getModulesToBuild(targetModule, context.rootDir);
 
-  // Case 2: Build specific modules
-  const specifiedModules = targetModule.split(",").filter(Boolean);
-  if (specifiedModules.length > 0) {
-    console.log(`Building ${specifiedModules.length} module(s)...\n`);
-    return specifiedModules.map((name) => name.trim());
-  }
-
-  // Case 3: No module specified, use first available
-  console.log(
-    "No target module specified, building first available module...\n"
+  // Build configurations for modules
+  return modules.flatMap((moduleInfo) =>
+    buildModuleVariantConfig(moduleInfo, context)
   );
-  return [availableModules[0]];
+}
+
+async function buildSiteConfigs(context) {
+  const targetSite = context.env.TARGET_SITES || context.env.TARGET_SITE || "*";
+
+  // Determine which sites to build
+  const sites = siteUtils.getSitesToBuild(targetSite, context.rootDir);
+
+  // Build configurations for sites
+  return sites.flatMap((siteInfo) => createSiteConfig(siteInfo, context));
+}
+
+function chooseBuildMode() {
+  const isMainBranch = process.env.CF_PAGES_BRANCH === "main";
+
+  return isMainBranch ? BUILD_MODES.PRODUCTION : BUILD_MODES.DEVELOPMENT;
+}
+
+function getProdBaseUrl(rootDir, argv, env) {
+  let { PUBLIC_URL, CF_PAGES_URL, CF_PAGES_BRANCH, GH_PAGES_URL } = env;
+
+  PUBLIC_URL ??= getDevBaseUrl(rootDir, argv, env);
+  PUBLIC_URL = normalizeUrl(PUBLIC_URL);
+  CF_PAGES_URL = normalizeUrl(CF_PAGES_URL);
+  GH_PAGES_URL = normalizeUrl(GH_PAGES_URL);
+
+  if (CF_PAGES_BRANCH !== "main" && CF_PAGES_BRANCH !== "master")
+    CF_PAGES_URL = null;
+
+  return CF_PAGES_URL || GH_PAGES_URL || PUBLIC_URL;
+}
+
+function getDevBaseUrl(rootDir, argv, env) {
+  const port = parseInt(argv.port) || env.DEV_SERVER_PORT || 3005;
+  const isTunnel = !!argv.tunnel;
+
+  if (!isTunnel) return `http://localhost:${port}`;
+
+  TUNNEL_URL ??= readConfigFile(
+    path.join(rootDir, PATHS.BUILD_DEV, "quick-tunnel.txt")
+  );
+
+  return normalizeUrl(TUNNEL_URL);
+}
+
+function getBasePublicUrl({ isProduction, rootDir, argv, env }) {
+  let { PUBLIC_URL, CF_PAGES_URL, CF_PAGES_BRANCH, GH_PAGES_URL, TUNNEL_URL } =
+    env;
+
+  if (isProduction) {
+  } else {
+  }
+
+  const serverPort = parseInt(argv.port) || env.DEV_SERVER_PORT || 3005;
+  const isTunnel = !!argv.tunnel;
+
+  if (isTunnel) {
+    TUNNEL_URL ??= readConfigFile(
+      path.join(rootDir, PATHS.BUILD_DEV, "quick-tunnel.txt")
+    );
+
+    return normalizeUrl(TUNNEL_URL);
+  }
+
+  PUBLIC_URL ??= `http://localhost:${serverPort}`;
+
+  PUBLIC_URL = normalizeUrl(PUBLIC_URL);
+  CF_PAGES_URL = normalizeUrl(CF_PAGES_URL);
+  GH_PAGES_URL = normalizeUrl(GH_PAGES_URL);
+
+  if (CF_PAGES_URL) {
+    console.log("Received public URL from Cloudflare:", CF_PAGES_URL);
+
+    if (!mode && CF_PAGES_BRANCH) {
+      if (CF_PAGES_BRANCH === "main" || CF_PAGES_BRANCH === "master") {
+        mode = "production";
+      } else mode = "development";
+
+      console.log("Set build mode:", mode, "based on branch:", CF_PAGES_BRANCH);
+    }
+  }
+
+  if (GH_PAGES_URL) {
+    console.log("Received public URL from GitHub Pages:", GH_PAGES_URL);
+
+    if (!mode) {
+      mode = "production";
+
+      console.log("Set build mode:", mode);
+    }
+  }
+
+  if (!mode) {
+    console.log("No build mode specified, build with production mode");
+
+    mode = "production";
+  }
+
+  if (mode === "production" && !CF_PAGES_URL && !GH_PAGES_URL && !PUBLIC_URL) {
+    throw new Error("No public url received under production mode");
+  }
+
+  return CF_PAGES_URL || GH_PAGES_URL || PUBLIC_URL;
 }
 
 /**
- * Creates complete webpack configuration
+ * Generates webpack configuration objects with predefined settings and plugins.
+ *
+ * @param {object} webpack - The webpack instance to use for plugin creation
+ * @param {object} argv - Webpack CLI arguments object
+ * @param {string} argv.mode - Build mode ('production' or 'development')
+ * @param {number} [argv.port] - Dev server port number
+ * @param {string} importMetaUrl - The import.meta.url of the webpack config file
+ * @param {Array} userPlugins - Custom plugins to extend functionality. Can be instances
+ *                             of CollectorPlugin for content processing or webpack plugins
+ *                             for build customization.
+ * @returns {Promise<object>} Webpack configuration object
+ * @throws {Error} If remote module URL is not configured in site.yml
+ * @throws {Error} If userPlugins is not an array
+ * @throws {Error} If rootDir is invalid
+ *
+ * @example
+ * // webpack.config.js
+ * import { configHost } from "@uniwebcms/site-content-collector/webpack";
+ * import webpack from "webpack";
+ * import { ImageOptimizerPlugin } from './plugins/image-optimizer';
+ * import { CustomWebpackPlugin } from './plugins/webpack-plugin';
+ *
+ * const plugins = [
+ *   new ImageOptimizerPlugin({ quality: 80 }),  // CollectorPlugin for image processing
+ *   new CustomWebpackPlugin()                   // Standard webpack plugin
+ * ];
+ *
+ * export default async (_, argv) => configHost(webpack, argv, import.meta.url, plugins);
  */
-export default function createWebpackConfig(
+export default async function createWebpackConfig(
   webpack,
   argv,
-  rootDir,
+  importMetaUrl,
   userPlugins = []
 ) {
+  // Validate inputs
+  if (!Array.isArray(userPlugins)) {
+    throw new Error("userPlugins must be an array");
+  }
+
+  const rootDir = path.dirname(fileURLToPath(importMetaUrl));
+  if (!rootDir) {
+    throw new Error("Invalid root directory");
+  }
+
+  // const port = parseInt(argv.port) || process.env.DEV_SERVER_PORT || 3000;
+  const mode = argv.mode || chooseBuildMode();
+  const isProduction = mode === BUILD_MODES.PRODUCTION;
+  const relOutDir = isProduction ? PATHS.DIST : PATHS.BUILD_DEV;
+  const outDir = path.join(rootDir, relOutDir);
+  const env = process.env;
+
+  // Prepare the base public URL such that the module's URL is `${basePublicUrl}/${moduleName}/${uuid}/`
+  const basePublicUrl = isProduction
+    ? getProdBaseUrl(rootDir, argv, env)
+    : getDevBaseUrl(rootDir, argv, env);
+
   // Setup build context
   const context = {
     webpack,
-    env: process.env,
-    argv,
+    // env: process.env,
+    // argv,
+    mode,
+    isProduction,
+    // port,
     rootDir,
-    srcDir: path.resolve(rootDir, PATHS.SRC),
-    distDir: path.resolve(rootDir, PATHS.DIST),
-    buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
+    outDir,
+    relOutDir,
+    // srcDir: path.resolve(rootDir, PATHS.SRC),
+    // distDir: path.resolve(rootDir, PATHS.DIST),
+    // buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
     userPlugins,
+    basePublicUrl,
+    // lifecycleEvent: process.env.npm_lifecycle_event,
   };
 
   try {
-    // Determine which modules to build
-    const modules = getModulesToBuild(
-      process.env.TARGET_MODULE || "*",
-      context.srcDir
-    );
+    const moduleConfigs = buildModuleConfigs(context);
+    const siteConfigs = await buildSiteConfigs(context);
 
-    // Build configurations for all modules
-    const configs = modules.flatMap((moduleName) =>
-      buildModuleConfig({ moduleName, context })
-    );
+    // Concat module and site configs
+    const configs = [...moduleConfigs, ...siteConfigs];
 
     // Return single config or array based on number of configs
     return configs.length === 1 ? configs[0] : configs;
