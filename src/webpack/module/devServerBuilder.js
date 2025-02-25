@@ -181,11 +181,11 @@ function getWebSocketConfig() {
  * @returns {Object} Complete dev server configuration
  */
 export function getDevServerConfig(context) {
-  const url = new URL(context.basePublicUrl);
+  const devServerUrl = new URL(context.basePublicUrl);
 
   return {
-    port: url.port,
-    host: url.hostname,
+    port: devServerUrl.port,
+    host: devServerUrl.hostname,
     ...getStaticServing(context),
     ...getDevMiddleware({ publicPath }),
     ...getHotModuleConfig(),

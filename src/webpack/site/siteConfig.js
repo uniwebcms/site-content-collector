@@ -16,56 +16,17 @@ import { CollectorPlugin } from "../../core/plugin.js";
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
  *
- * @param {object} webpack - The webpack instance to use for plugin creation
- * @param {object} argv - Webpack CLI arguments object
- * @param {string} argv.mode - Build mode ('production' or 'development')
- * @param {number} [argv.port] - Dev server port number
- * @param {string} importMetaUrl - The import.meta.url of the webpack config file
- * @param {Array} userPlugins - Custom plugins to extend functionality. Can be instances
- *                             of CollectorPlugin for content processing or webpack plugins
- *                             for build customization.
- * @returns {Promise<object>} Webpack configuration object
- * @throws {Error} If remote module URL is not configured in site.yml
- * @throws {Error} If userPlugins is not an array
- * @throws {Error} If rootDir is invalid
- *
- * @example
- * // webpack.config.js
- * import { configHost } from "@uniwebcms/site-content-collector/webpack";
- * import webpack from "webpack";
- * import { ImageOptimizerPlugin } from './plugins/image-optimizer';
- * import { CustomWebpackPlugin } from './plugins/webpack-plugin';
- *
- * const plugins = [
- *   new ImageOptimizerPlugin({ quality: 80 }),  // CollectorPlugin for image processing
- *   new CustomWebpackPlugin()                   // Standard webpack plugin
- * ];
- *
- * export default async (_, argv) => configHost(webpack, argv, import.meta.url, plugins);
+ * @param {object} siteInfo -
+ * @param {object} context -
+ * @returns {Object|Array} Webpack configuration object
  */
-async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
-  // Validate inputs
-  if (!Array.isArray(userPlugins)) {
-    throw new Error("userPlugins must be an array");
-  }
-
-  const rootDir = dirname(fileURLToPath(importMetaUrl));
-  if (!rootDir) {
-    throw new Error("Invalid root directory");
-  }
-
-  // Load and validate site configuration
-  const config = await loadSiteConfig(rootDir);
-  if (!config.components?.moduleUrl) {
-    throw new Error(
-      "Remote module URL is required in site.yml (components.moduleUrl)"
-    );
-  }
+async function createSiteConfig(siteInfo, context) {
+  const { siteConfig } = siteInfo;
+  const { rootDir, userPlugins, isProduction, mode } = context;
 
   // Setup environment
-  const isProduction = argv.mode === "production";
-  const mode = isProduction ? "production" : "development";
-  const serverPort = parseInt(argv.port) || 3000;
+  // const serverPort = parseInt(argv.port) || 3000;
+  const devServerUrl = new URL(context.basePublicUrl);
 
   // Extract webpack plugins
   const { ModuleFederationPlugin } = webpack.container;
@@ -174,7 +135,7 @@ async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
       new ModuleFederationPlugin({
         name: "site-builder",
         remotes: {
-          RemoteModule: `WebsiteRemote@${config.components.moduleUrl}/remoteEntry.js`,
+          RemoteModule: `WebsiteRemote@${siteConfig.components.moduleUrl}/remoteEntry.js`,
         },
         shared: {
           react: {
@@ -203,7 +164,8 @@ async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
       static: {
         directory: join(rootDir, "dist"),
       },
-      port: serverPort,
+      port: devServerUrl.port,
+      host: devServerUrl.hostname,
     },
     optimization: {
       moduleIds: "deterministic",
@@ -221,4 +183,4 @@ async function configHost(webpack, argv, importMetaUrl, userPlugins = []) {
   };
 }
 
-export default configHost;
+export default createSiteConfig;
