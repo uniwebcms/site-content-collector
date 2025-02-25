@@ -88,7 +88,9 @@ function getProdBaseUrl(rootDir, argv, env) {
 }
 
 function getDevBaseUrl(rootDir, argv, env) {
-  const port = parseInt(argv.port) || env.DEV_SERVER_PORT || 3005;
+  let { TUNNEL_URL, DEV_SERVER_PORT } = env;
+
+  const port = parseInt(argv.port) || DEV_SERVER_PORT || 3005;
   const isTunnel = !!argv.tunnel;
 
   if (!isTunnel) return `http://localhost:${port}`;
@@ -98,66 +100,6 @@ function getDevBaseUrl(rootDir, argv, env) {
   );
 
   return normalizeUrl(TUNNEL_URL);
-}
-
-function getBasePublicUrl({ isProduction, rootDir, argv, env }) {
-  let { PUBLIC_URL, CF_PAGES_URL, CF_PAGES_BRANCH, GH_PAGES_URL, TUNNEL_URL } =
-    env;
-
-  if (isProduction) {
-  } else {
-  }
-
-  const serverPort = parseInt(argv.port) || env.DEV_SERVER_PORT || 3005;
-  const isTunnel = !!argv.tunnel;
-
-  if (isTunnel) {
-    TUNNEL_URL ??= readConfigFile(
-      path.join(rootDir, PATHS.BUILD_DEV, "quick-tunnel.txt")
-    );
-
-    return normalizeUrl(TUNNEL_URL);
-  }
-
-  PUBLIC_URL ??= `http://localhost:${serverPort}`;
-
-  PUBLIC_URL = normalizeUrl(PUBLIC_URL);
-  CF_PAGES_URL = normalizeUrl(CF_PAGES_URL);
-  GH_PAGES_URL = normalizeUrl(GH_PAGES_URL);
-
-  if (CF_PAGES_URL) {
-    console.log("Received public URL from Cloudflare:", CF_PAGES_URL);
-
-    if (!mode && CF_PAGES_BRANCH) {
-      if (CF_PAGES_BRANCH === "main" || CF_PAGES_BRANCH === "master") {
-        mode = "production";
-      } else mode = "development";
-
-      console.log("Set build mode:", mode, "based on branch:", CF_PAGES_BRANCH);
-    }
-  }
-
-  if (GH_PAGES_URL) {
-    console.log("Received public URL from GitHub Pages:", GH_PAGES_URL);
-
-    if (!mode) {
-      mode = "production";
-
-      console.log("Set build mode:", mode);
-    }
-  }
-
-  if (!mode) {
-    console.log("No build mode specified, build with production mode");
-
-    mode = "production";
-  }
-
-  if (mode === "production" && !CF_PAGES_URL && !GH_PAGES_URL && !PUBLIC_URL) {
-    throw new Error("No public url received under production mode");
-  }
-
-  return CF_PAGES_URL || GH_PAGES_URL || PUBLIC_URL;
 }
 
 /**
@@ -210,7 +152,7 @@ export default async function createWebpackConfig(
   const mode = argv.mode || chooseBuildMode();
   const isProduction = mode === BUILD_MODES.PRODUCTION;
   const relOutDir = isProduction ? PATHS.DIST : PATHS.BUILD_DEV;
-  const outDir = path.join(rootDir, relOutDir);
+  const outputDir = path.join(rootDir, relOutDir);
   const env = process.env;
 
   // Prepare the base public URL such that the module's URL is `${basePublicUrl}/${moduleName}/${uuid}/`
@@ -227,11 +169,11 @@ export default async function createWebpackConfig(
     isProduction,
     // port,
     rootDir,
-    outDir,
-    relOutDir,
+    outputDir,
+    // relOutDir,
     // srcDir: path.resolve(rootDir, PATHS.SRC),
     // distDir: path.resolve(rootDir, PATHS.DIST),
-    // buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
+    buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
     userPlugins,
     basePublicUrl,
     // lifecycleEvent: process.env.npm_lifecycle_event,

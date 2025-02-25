@@ -1,10 +1,9 @@
+import path from "path";
 import pluginBuilder from "./pluginBuilder.js";
 import loaderBuilder from "./loaderBuilder.js";
-import pathBuilder from "./pathBuilder.js";
-import optimizationBuilder from "./optimizationBuilder.js";
-import devServerBuilder from "./devServerBuilder.js";
 import moduleUtils from "./moduleUtils.js";
-import { BUILD_MODES, PATHS, ERRORS } from "../constants.js";
+import { getBuildOptimizations } from "./optimizationBuilder.js";
+import { getDevServerConfig } from "./devServerBuilder.js";
 
 /**
  * Creates a webpack configuration for a single module variant
@@ -12,34 +11,28 @@ import { BUILD_MODES, PATHS, ERRORS } from "../constants.js";
  * @returns {Object} Webpack configuration
  */
 export default function createModuleConfig(moduleInfo, context) {
-  const { variant } = moduleInfo;
-  const { rootDir, srcDir, isProduction } = context;
+  const { variant, buildId: uuid } = moduleInfo;
+  const { isProduction } = context;
+  const moduleName = moduleInfo.name;
+  const publicPath = context.basePublicUrl + `${moduleName}/${uuid}`;
 
-  const moduleName = variant
-    ? `${moduleInfo.name}-${variant}`
-    : moduleInfo.name;
-
-  // Get paths configuration
-  const paths = pathBuilder.getPathConfig(moduleInfo, context);
-
-  // Get module information and exposed components
-  // const moduleInfo = moduleUtils.getModuleInfo(srcDir, moduleName);
-  // const exposes = moduleUtils.getModuleFederationExposes(srcDir, moduleName);
+  let outputDir = path.join(context.outputDir, moduleName, uuid);
+  if (variant) outputDir += `_${variant}`;
 
   // Make sure that the `dynamicExports.js` file of the module is up to date
   moduleUtils.refreshDynamicExports(moduleInfo);
 
   return {
-    name: moduleName,
+    name: variant ? `${moduleName}-${variant}` : moduleName,
     mode,
 
     // Entry configuration
-    entry: moduleInfo.entryPath,
+    entry: moduleInfo.entryPath, // @todo: multiple entries for variants?
 
     // Output configuration
     output: {
-      path: paths.outputPath,
-      publicPath: paths.publicPath,
+      path: outputDir, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
+      publicPath, // with suffix `/${module}/${uuid}/`
       filename: "[name].[contenthash].js",
       clean: true,
     },
@@ -48,7 +41,7 @@ export default function createModuleConfig(moduleInfo, context) {
     resolve: {
       extensions: [".jsx", ".js", ".json"],
       alias: {
-        "@": srcDir,
+        "@": path.join(moduleInfo.modulePath, "components"),
       },
     },
 
@@ -58,36 +51,13 @@ export default function createModuleConfig(moduleInfo, context) {
     },
 
     // Plugins
-    plugins: pluginBuilder.getPlugins({
-      mode,
-      moduleName,
-      srcDir,
-      publicPath: paths.publicPath,
-      outputPath: paths.outputPath,
-      buildId,
-      exposes: moduleInfo.exposes,
-      packageJson: moduleInfo.packageJson,
-      variant,
-      userPlugins: context.userPlugins,
-    }),
+    plugins: pluginBuilder.getPlugins(moduleInfo, context),
 
     // Optimization and performance
-    ...optimizationBuilder.getBuildOptimizations({
-      mode,
-      rootDir,
-      configPath: moduleInfo.entryPath,
-    }),
+    ...getBuildOptimizations(moduleInfo, context),
 
     // Development server
-    ...(isProduction
-      ? {}
-      : {
-          devServer: devServerBuilder.getDevServerConfig({
-            port: context.serverPort,
-            buildDevDir: context.buildDevDir,
-            publicPath: paths.publicPath,
-          }),
-        }),
+    ...(isProduction ? {} : { devServer: getDevServerConfig(context) }),
 
     // Build reporting
     stats: isProduction ? "normal" : "minimal",

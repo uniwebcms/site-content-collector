@@ -108,12 +108,15 @@ function getMinimizerConfig() {
  * @param {Object} options Cache options
  * @returns {Object} Cache configuration
  */
-function getCacheConfig({ rootDir, configPath }) {
+function getCacheConfig(moduleInfo, context) {
+  const { entryPath } = moduleInfo;
+  const { rootDir } = context;
+
   return {
     type: "filesystem",
     version: `${Date.now()}`,
     buildDependencies: {
-      config: [configPath],
+      config: [entryPath],
     },
     cacheDirectory: path.resolve(
       rootDir,
@@ -131,8 +134,8 @@ function getCacheConfig({ rootDir, configPath }) {
  * @param {Object} options Performance options
  * @returns {Object|boolean} Performance hints configuration
  */
-function getPerformanceConfig({ isProduction }) {
-  if (!isProduction) return false;
+function getPerformanceConfig(context) {
+  if (!context.isProduction) return false;
 
   return {
     hints: "warning",
@@ -151,7 +154,7 @@ function getPerformanceConfig({ isProduction }) {
  * @param {Object} options Configuration options
  * @returns {Object} Complete optimization configuration
  */
-function getOptimizationConfig({ isProduction, rootDir, configPath }) {
+function getOptimizationConfig({ isProduction }) {
   if (!isProduction) {
     return {
       removeAvailableModules: false,
@@ -178,24 +181,18 @@ function getOptimizationConfig({ isProduction, rootDir, configPath }) {
 
 /**
  * Get complete build optimization settings
- * @param {Object} options Configuration options
+ * @param {Object} moduleInfo Configuration options
+ * @param {Object} context Build context
  * @returns {Object} Complete build optimization settings
  */
-export function getBuildOptimizations(options) {
-  const isProduction = options.mode === BUILD_MODES.PRODUCTION;
-
+export function getBuildOptimizations(moduleInfo, context) {
   return {
-    optimization: getOptimizationConfig({ ...options, isProduction }),
-    cache: getCacheConfig(options),
-    performance: getPerformanceConfig({ isProduction }),
+    optimization: getOptimizationConfig(context),
+    cache: getCacheConfig(moduleInfo, context),
+    performance: getPerformanceConfig(context),
   };
 }
 
 export default {
   getBuildOptimizations,
-  getOptimizationConfig,
-  getCacheConfig,
-  getPerformanceConfig,
-  getCodeSplittingConfig,
-  getMinimizerConfig,
 };

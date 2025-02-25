@@ -8,7 +8,7 @@
  * - Security and CORS settings
  */
 
-import { PATHS, DEFAULTS, BUILD_MODES } from "../constants.js";
+import { PATHS } from "../constants.js";
 
 /**
  * Configure static file serving
@@ -39,7 +39,7 @@ function getStaticServing({ buildDevDir }) {
 function getDevMiddleware({ publicPath }) {
   return {
     devMiddleware: {
-      publicPath,
+      // publicPath,
       writeToDisk: true, // For other tools that need physical files
       stats: "minimal",
     },
@@ -180,15 +180,13 @@ function getWebSocketConfig() {
  * @param {Object} options Configuration options
  * @returns {Object} Complete dev server configuration
  */
-export function getDevServerConfig({
-  port = DEFAULTS.DEV_SERVER_PORT,
-  buildDevDir,
-  publicPath,
-}) {
+export function getDevServerConfig(context) {
+  const url = new URL(context.basePublicUrl);
+
   return {
-    port,
-    host: "localhost",
-    ...getStaticServing({ buildDevDir }),
+    port: url.port,
+    host: url.hostname,
+    ...getStaticServing(context),
     ...getDevMiddleware({ publicPath }),
     ...getHotModuleConfig(),
     ...getHeaders(),
@@ -223,14 +221,14 @@ export function getDevServerConfig({
 
 export default {
   getDevServerConfig,
-  getStaticServing,
-  getDevMiddleware,
-  getHotModuleConfig,
-  getHeaders,
-  getHistoryFallback,
-  getLoggingConfig,
-  getWatchOptions,
-  getSecurityConfig,
-  getOpenConfig,
-  getWebSocketConfig,
+  // getStaticServing,
+  // getDevMiddleware,
+  // getHotModuleConfig,
+  // getHeaders,
+  // getHistoryFallback,
+  // getLoggingConfig,
+  // getWatchOptions,
+  // getSecurityConfig,
+  // getOpenConfig,
+  // getWebSocketConfig,
 };
