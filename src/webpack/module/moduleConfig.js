@@ -14,25 +14,28 @@ export default function createModuleConfig(moduleInfo, context) {
   const { variant, buildId: uuid } = moduleInfo;
   const { isProduction } = context;
   const moduleName = moduleInfo.name;
-  const publicPath = context.basePublicUrl + `${moduleName}/${uuid}`;
 
-  let outputDir = path.join(context.outputDir, moduleName, uuid);
-  if (variant) outputDir += `_${variant}`;
+  // Add extra info to the module specs
+  moduleInfo.publicUrl = context.basePublicUrl + `/${moduleName}/${uuid}`;
+
+  moduleInfo.outputPath =
+    path.join(context.outputDir, moduleName, uuid) +
+    (variant ? `_${variant}` : "");
 
   // Make sure that the `dynamicExports.js` file of the module is up to date
   moduleUtils.refreshDynamicExports(moduleInfo);
 
   return {
     name: variant ? `${moduleName}-${variant}` : moduleName,
-    mode,
+    mode: moduleInfo.mode,
 
     // Entry configuration
     entry: moduleInfo.entryPath, // @todo: multiple entries for variants?
 
     // Output configuration
     output: {
-      path: outputDir, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
-      publicPath, // with suffix `/${module}/${uuid}/`
+      path: moduleInfo.outputPath, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
+      publicPath: moduleInfo.publicUrl, // with suffix `/${module}/${uuid}/`
       filename: "[name].[contenthash].js",
       clean: true,
     },

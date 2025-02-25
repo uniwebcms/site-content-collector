@@ -219,13 +219,10 @@ function getTailwindLoader(configPath) {
  * @returns {Array} Array of webpack loader rules
  */
 export function getLoaderRules(moduleInfo, context) {
-  const { tailwindConfig } = moduleInfo;
-  const { isProduction } = context;
-
   return [
     createJavaScriptLoader(),
-    createCssLoader({ isProduction, tailwindConfig }),
-    createSassLoader({ isProduction }),
+    createCssLoader(moduleInfo, context),
+    createSassLoader(context),
     createSvgLoader(),
     createImageLoader(),
     createFontLoader(),
@@ -236,13 +233,13 @@ export function getLoaderRules(moduleInfo, context) {
 
 export default {
   getLoaderRules,
-  createJavaScriptLoader,
-  createCssLoader,
-  createSassLoader,
-  createSvgLoader,
-  createImageLoader,
-  createFontLoader,
-  createMdxLoader,
-  createRawLoader,
-  getTailwindLoader,
+  // createJavaScriptLoader,
+  // createCssLoader,
+  // createSassLoader,
+  // createSvgLoader,
+  // createImageLoader,
+  // createFontLoader,
+  // createMdxLoader,
+  // createRawLoader,
+  // getTailwindLoader,
 };

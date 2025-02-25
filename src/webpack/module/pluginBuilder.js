@@ -62,13 +62,7 @@ function createModuleFederationPlugin(moduleInfo, context) {
  * @param {Object} options - Plugin options
  * @returns {Array} Array of webpack plugins
  */
-function createCommonPlugins({
-  moduleInfo,
-  context,
-  publicPath,
-  outputPath,
-  buildId,
-}) {
+function createCommonPlugins(moduleInfo, context) {
   return [
     // Module Federation setup
     createModuleFederationPlugin(moduleInfo, context),
@@ -87,9 +81,9 @@ function createCommonPlugins({
 
     // Manage builds and logging
     new CleanAndLogPlugin({
-      outputPath,
-      publicPath,
-      currentBuildUuid: buildId,
+      outputPath: moduleInfo.outputPath,
+      publicUrl: moduleInfo.publicUrl,
+      currentBuildUuid: moduleInfo.buildId,
       keepBuilds: 2,
     }),
   ];
@@ -166,37 +160,20 @@ function createDevelopmentPlugins() {
  * @param {Object} options - Configuration options
  * @returns {Array} Combined array of all plugins
  */
-export function getPlugins({
-  mode,
-  moduleInfo,
-  context,
-  publicPath,
-  outputPath,
-  buildId,
-  userPlugins = [],
-}) {
-  const commonPlugins = createCommonPlugins({
-    moduleInfo,
-    context,
-    publicPath,
-    outputPath,
-    buildId,
-    exposes,
-    packageJson,
-  });
+export function getPlugins(moduleInfo, context) {
+  const commonPlugins = createCommonPlugins(moduleInfo, context);
 
-  const modeSpecificPlugins =
-    mode === BUILD_MODES.PRODUCTION
-      ? createProductionPlugins(moduleInfo)
-      : createDevelopmentPlugins();
+  const modeSpecificPlugins = context.isProduction
+    ? createProductionPlugins(moduleInfo)
+    : createDevelopmentPlugins();
 
-  return [...commonPlugins, ...modeSpecificPlugins, ...userPlugins];
+  return [...commonPlugins, ...modeSpecificPlugins, ...context.userPlugins];
 }
 
 export default {
   getPlugins,
-  createModuleFederationPlugin,
-  createCommonPlugins,
-  createProductionPlugins,
-  createDevelopmentPlugins,
+  // createModuleFederationPlugin,
+  // createCommonPlugins,
+  // createProductionPlugins,
+  // createDevelopmentPlugins,
 };

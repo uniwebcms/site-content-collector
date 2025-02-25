@@ -8,6 +8,7 @@
 import path from "path";
 import fs from "fs";
 import { PATHS, FILES, PATTERNS, ERRORS, EXTENSIONS } from "../constants.js";
+import { readConfigFile } from "../fileUtils.js";
 
 /**
  * Find all valid site folders in the src directory
@@ -66,8 +67,8 @@ export function getSitesToBuild(targetSite, rootDir) {
   // Get all available sites
   const availableSites = findSites(path.join(rootDir, "sites"));
 
-  if (fs.existsSync(path.join(srcDir, "site.yml")))
-    availableSites.unshift(getSiteInfo(srcDir));
+  if (fs.existsSync(path.join(rootDir, "site.yml")))
+    availableSites.unshift(getSiteInfo(rootDir));
 
   if (!availableSites.length) {
     return [];

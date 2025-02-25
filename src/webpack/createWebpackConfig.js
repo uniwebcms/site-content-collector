@@ -26,6 +26,7 @@ function buildModuleVariantConfig(moduleInfo, context) {
   // Generate unique build identifier for each module
   const buildId = uuidv4();
 
+  // Clone the module info because it will be extended as it's processed
   // Create configurations for each Tailwind variant (or single config if no variants)
   if (moduleInfo.tailwindConfigs.length <= 1)
     return createModuleConfig({ ...moduleInfo, buildId }, context);
@@ -44,9 +45,8 @@ function buildModuleVariantConfig(moduleInfo, context) {
   );
 }
 
-function buildModuleConfigs(context) {
-  const targetModule =
-    context.env.TARGET_MODULES || context.env.TARGET_MODULE || "*";
+function buildModuleConfigs(env, context) {
+  const targetModule = env.TARGET_MODULES || env.TARGET_MODULE || "*";
 
   // Determine which modules to build
   const modules = moduleUtils.getModulesToBuild(targetModule, context.rootDir);
@@ -57,8 +57,8 @@ function buildModuleConfigs(context) {
   );
 }
 
-async function buildSiteConfigs(context) {
-  const targetSite = context.env.TARGET_SITES || context.env.TARGET_SITE || "*";
+async function buildSiteConfigs(env, context) {
+  const targetSite = env.TARGET_SITES || env.TARGET_SITE || "*";
 
   // Determine which sites to build
   const sites = siteUtils.getSitesToBuild(targetSite, context.rootDir);
@@ -93,7 +93,7 @@ function getDevBaseUrl(rootDir, argv, env) {
   const port = parseInt(argv.port) || DEV_SERVER_PORT || 3005;
   const isTunnel = !!argv.tunnel;
 
-  if (!isTunnel) return `http://localhost:${port}`;
+  if (!isTunnel) return normalizeUrl(`http://localhost:${port}`);
 
   TUNNEL_URL ??= readConfigFile(
     path.join(rootDir, PATHS.BUILD_DEV, "quick-tunnel.txt")
@@ -180,8 +180,8 @@ export default async function createWebpackConfig(
   };
 
   try {
-    const moduleConfigs = buildModuleConfigs(context);
-    const siteConfigs = await buildSiteConfigs(context);
+    const moduleConfigs = buildModuleConfigs(env, context);
+    const siteConfigs = await buildSiteConfigs(env, context);
 
     // Concat module and site configs
     const configs = [...moduleConfigs, ...siteConfigs];
