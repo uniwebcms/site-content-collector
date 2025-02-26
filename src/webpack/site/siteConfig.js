@@ -1,16 +1,7 @@
-// Node.js built-ins
-import { resolve, join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-// External packages
+import { resolve, join, relative } from "path";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
-
-// Local imports
 import { SiteContentPlugin } from "./site-content-plugin.js";
-import { loadSiteConfig } from "./site-config-loader.js";
-
-// Core plugin system
 import { CollectorPlugin } from "../../core/plugin.js";
 
 /**
@@ -24,12 +15,20 @@ async function createSiteConfig(siteInfo, context) {
   const { siteConfig } = siteInfo;
   const { rootDir, userPlugins, isProduction, mode } = context;
 
+  const relEntryPath = "./" + relative(rootDir, siteInfo.entryPath);
+  console.log("relEntryPath", relEntryPath);
+
+  // Add extra info to the module specs
+  siteInfo.publicUrl = context.basePublicUrl + `/${siteInfo.name}`;
+
+  siteInfo.outputPath = join(context.outputDir, siteInfo.name);
+
   // Setup environment
   // const serverPort = parseInt(argv.port) || 3000;
-  const devServerUrl = new URL(context.basePublicUrl);
+  // const devServerUrl = new URL(context.basePublicUrl);
 
   // Extract webpack plugins
-  const { ModuleFederationPlugin } = webpack.container;
+  const { ModuleFederationPlugin } = context.webpack.container;
 
   // Partition user plugins by type
   const [collectorPlugins, webpackPlugins] = [
@@ -44,10 +43,16 @@ async function createSiteConfig(siteInfo, context) {
     );
   }
 
+  const moduleUrl = siteConfig.components.url;
+  console.log("siteConfig", siteConfig);
+
   return {
     mode,
-    entry: "./src/index.js",
+    entry: relEntryPath, //siteInfo.entryPath,
     output: {
+      path: siteInfo.outputPath, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
+      publicPath: siteInfo.publicUrl, // with suffix `/${module}/${uuid}/`
+
       path: resolve(rootDir, "dist"),
       filename: "[name].[contenthash].js",
       publicPath: "auto",
@@ -159,14 +164,21 @@ async function createSiteConfig(siteInfo, context) {
       // Add user-provided webpack plugins
       // ...webpackPlugins,
     ],
-    devServer: {
-      historyApiFallback: true,
-      static: {
-        directory: join(rootDir, "dist"),
-      },
-      port: devServerUrl.port,
-      host: devServerUrl.hostname,
+    // devServer: {
+    //   historyApiFallback: true,
+    //   static: {
+    //     directory: join(rootDir, "dist"),
+    //   },
+    //   port: devServerUrl.port,
+    //   host: devServerUrl.hostname,
+    // },
+    watch: !isProduction,
+    watchOptions: {
+      // ignored: /node_modules/,
+      aggregateTimeout: 300,
+      poll: false,
     },
+
     optimization: {
       moduleIds: "deterministic",
       runtimeChunk: "single",

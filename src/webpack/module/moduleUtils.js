@@ -31,7 +31,7 @@ import { readConfigFile } from "../fileUtils.js";
  * @returns {object[]} Array of module info objects
  */
 function findModules(srcDir) {
-  console.log("srcDir", srcDir);
+  // console.log("srcDir", srcDir);
   if (!fs.existsSync(srcDir)) return [];
 
   return fs

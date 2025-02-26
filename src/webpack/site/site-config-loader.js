@@ -32,6 +32,7 @@ async function loadSiteConfig(sitePath) {
 
     // Use stat() to check if file exists
     try {
+      console.log("ymlPath", ymlPath);
       await stat(ymlPath);
     } catch (error) {
       throw new Error("site.yml not found");

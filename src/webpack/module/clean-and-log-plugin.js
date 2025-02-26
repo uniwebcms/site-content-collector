@@ -21,7 +21,7 @@ export default class CleanOldBuildsAndLogPlugin {
   constructor(options) {
     this.options = options;
 
-    console.log("options", options);
+    // console.log("options", options);
     if (
       !this.options.outputPath ||
       !this.options.publicUrl ||

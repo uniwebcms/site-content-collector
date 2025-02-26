@@ -57,11 +57,32 @@ function buildModuleConfigs(env, context) {
   );
 }
 
-async function buildSiteConfigs(env, context) {
+// async function buildSiteConfigs(env, context) {
+//   const targetSite = env.TARGET_SITES || env.TARGET_SITE || "*";
+
+//   // Determine which sites to build
+//   const sites = siteUtils.getSitesToBuild(targetSite, context.rootDir);
+
+//   // Build configurations for sites
+//   return sites.flatMap((siteInfo) => createSiteConfig(siteInfo, context));
+// }
+
+/**
+ * Builds configuration for sites based on environment and context
+ * @param {Object} env - Environment variables
+ * @param {Object} context - Build context
+ * @param {Object} options - Optional configuration
+ * @param {boolean} options.debug - Enable debug logging (default: false)
+ * @returns {Promise<Array>} - Array of site configurations
+ */
+async function buildSiteConfigs(env, context, options = {}) {
+  const { debug = true } = options;
   const targetSite = env.TARGET_SITES || env.TARGET_SITE || "*";
 
-  // Determine which sites to build
-  const sites = siteUtils.getSitesToBuild(targetSite, context.rootDir);
+  // Determine which sites to build (now awaiting the async function)
+  const sites = await siteUtils.getSitesToBuild(targetSite, context.rootDir, {
+    debug,
+  });
 
   // Build configurations for sites
   return sites.flatMap((siteInfo) => createSiteConfig(siteInfo, context));
@@ -163,28 +184,41 @@ export default async function createWebpackConfig(
   // Setup build context
   const context = {
     webpack,
-    // env: process.env,
-    // argv,
     mode,
     isProduction,
-    // port,
     rootDir,
     outputDir,
-    // relOutDir,
-    // srcDir: path.resolve(rootDir, PATHS.SRC),
-    // distDir: path.resolve(rootDir, PATHS.DIST),
     buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
     userPlugins,
     basePublicUrl,
-    // lifecycleEvent: process.env.npm_lifecycle_event,
+  };
+
+  const devServer = {
+    static: {
+      directory: context.outputDir,
+      watch: true,
+    },
+    port: parseInt(argv.port) || 3000,
+    host: "localhost",
+    hot: true,
+    historyApiFallback: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
+    devMiddleware: {
+      writeToDisk: true,
+    },
   };
 
   try {
-    const moduleConfigs = buildModuleConfigs(env, context);
+    const moduleConfigs = []; //buildModuleConfigs(env, context);
     const siteConfigs = await buildSiteConfigs(env, context);
 
     // Concat module and site configs
     const configs = [...moduleConfigs, ...siteConfigs];
+
+    // The the first config define the deb server options
+    if (configs.length) configs[0].devServer = devServer;
 
     // Return single config or array based on number of configs
     return configs.length === 1 ? configs[0] : configs;

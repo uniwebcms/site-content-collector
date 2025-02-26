@@ -43,9 +43,10 @@ export default function createModuleConfig(moduleInfo, context) {
     // Module resolution
     resolve: {
       extensions: [".jsx", ".js", ".json"],
-      alias: {
-        "@": path.join(moduleInfo.modulePath, "components"),
-      },
+      mainFiles: ["index"],
+      // alias: {
+      //   "@": path.join(moduleInfo.modulePath, "components"),
+      // },
     },
 
     // Loaders
@@ -57,10 +58,16 @@ export default function createModuleConfig(moduleInfo, context) {
     plugins: pluginBuilder.getPlugins(moduleInfo, context),
 
     // Optimization and performance
-    ...getBuildOptimizations(moduleInfo, context),
+    // ...getBuildOptimizations(moduleInfo, context),
 
     // Development server
-    ...(isProduction ? {} : { devServer: getDevServerConfig(context) }),
+    // ...(isProduction ? {} : { devServer: getDevServerConfig(context) }),
+    watch: !isProduction,
+    watchOptions: {
+      // ignored: /node_modules/,
+      aggregateTimeout: 300,
+      poll: false,
+    },
 
     // Build reporting
     stats: isProduction ? "normal" : "minimal",
