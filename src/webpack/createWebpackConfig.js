@@ -211,7 +211,7 @@ export default async function createWebpackConfig(
   };
 
   try {
-    const moduleConfigs = []; //buildModuleConfigs(env, context);
+    const moduleConfigs = buildModuleConfigs(env, context);
     const siteConfigs = await buildSiteConfigs(env, context);
 
     // Concat module and site configs

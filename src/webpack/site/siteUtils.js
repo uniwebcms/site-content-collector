@@ -94,7 +94,7 @@ async function findSites(srcDir, options = {}) {
 async function getSiteInfo(srcDir, siteName = null) {
   const sitePath = siteName ? path.join(srcDir, siteName) : srcDir;
   const packageJsonPath = path.join(sitePath, FILES.PACKAGE_JSON);
-  const siteConfigPath = path.join(sitePath, FILES.SITE_CONFIG);
+  // const siteConfigPath = path.join(sitePath, FILES.SITE_CONFIG);
 
   // Read package.json and site.yml
   const packageJson = readConfigFile(packageJsonPath);
@@ -104,11 +104,11 @@ async function getSiteInfo(srcDir, siteName = null) {
   if (!packageJson || !siteConfig) return null;
 
   return {
-    name: siteName || ".",
+    siteName,
     sitePath,
     packageJson,
     siteConfig,
-    entryPath: path.join(sitePath, `src/index.js`),
+    // entryPath: path.join(sitePath, `src/index.js`),
   };
 }
 

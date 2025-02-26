@@ -12,20 +12,15 @@ import { CollectorPlugin } from "../../core/plugin.js";
  * @returns {Object|Array} Webpack configuration object
  */
 async function createSiteConfig(siteInfo, context) {
-  const { siteConfig } = siteInfo;
+  const { siteName, sitePath, siteConfig } = siteInfo;
   const { rootDir, userPlugins, isProduction, mode } = context;
 
-  const relEntryPath = "./" + relative(rootDir, siteInfo.entryPath);
-  console.log("relEntryPath", relEntryPath);
+  const relSitePath = relative(rootDir, sitePath);
+  const relOutPath = siteName ? `sites/${siteName}` : "";
 
   // Add extra info to the module specs
-  siteInfo.publicUrl = context.basePublicUrl + `/${siteInfo.name}`;
-
-  siteInfo.outputPath = join(context.outputDir, siteInfo.name);
-
-  // Setup environment
-  // const serverPort = parseInt(argv.port) || 3000;
-  // const devServerUrl = new URL(context.basePublicUrl);
+  siteInfo.publicUrl = context.basePublicUrl + `/${relOutPath}`;
+  siteInfo.outputPath = join(context.outputDir, relOutPath);
 
   // Extract webpack plugins
   const { ModuleFederationPlugin } = context.webpack.container;
@@ -44,35 +39,61 @@ async function createSiteConfig(siteInfo, context) {
   }
 
   const moduleUrl = siteConfig.components.url;
-  console.log("siteConfig", siteConfig);
+  // console.log("siteConfig", siteConfig);
 
   return {
     mode,
-    entry: relEntryPath, //siteInfo.entryPath,
+    entry: "./" + join(relSitePath, "src/index.js"), //siteInfo.entryPath,
     output: {
       path: siteInfo.outputPath, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
       publicPath: siteInfo.publicUrl, // with suffix `/${module}/${uuid}/`
 
-      path: resolve(rootDir, "dist"),
+      // path: resolve(rootDir, "dist"),
       filename: "[name].[contenthash].js",
-      publicPath: "auto",
+      // publicPath: "auto",
       clean: true,
     },
     module: {
       rules: [
+        // {
+        //   test: /\.jsx?$/,
+        //   exclude: /node_modules/,
+        //   use: {
+        //     loader: "babel-loader",
+        //     options: {
+        //       presets: ["@babel/preset-react", "@babel/preset-env"],
+        //     },
+        //   },
+        // },
+        // // Process the Uniweb RTE code within the nodes modules
+        // {
+        //   test: /\.jsx?$/,
+        //   include: [
+        //     // Regular case for the node_modules folder
+        //     resolve(rootDir, "node_modules/@uniwebcms"),
+        //     // Yarn PnP virtual path
+        //     resolve(
+        //       rootDir,
+        //       ".yarn/__virtual__/@uniwebcms-uniweb-rte-virtual-"
+        //     ),
+        //   ],
+        //   use: {
+        //     loader: "babel-loader",
+        //     options: {
+        //       presets: ["@babel/preset-react", "@babel/preset-env"],
+        //     },
+        //   },
+        // },
         {
           test: /\.jsx?$/,
-          exclude: /node_modules/,
-          use: {
-            loader: "babel-loader",
-            options: {
-              presets: ["@babel/preset-react", "@babel/preset-env"],
-            },
+          exclude: (modulePath) => {
+            // Don't exclude paths containing @uniwebcms
+            if (modulePath.includes("@uniwebcms/uniweb-rte")) {
+              return false;
+            }
+            // Exclude all other node_modules
+            return /node_modules/.test(modulePath);
           },
-        },
-        {
-          test: /\.jsx?$/,
-          include: [resolve(rootDir, "node_modules/@uniwebcms")],
           use: {
             loader: "babel-loader",
             options: {
@@ -112,7 +133,7 @@ async function createSiteConfig(siteInfo, context) {
     plugins: [
       // Generate HTML file and inject bundles
       new HtmlWebpackPlugin({
-        template: "./public/index.html",
+        template: "./" + join(relSitePath, "public/index.html"), //"./public/index.html",
       }),
 
       // Process and inject site content
@@ -127,8 +148,8 @@ async function createSiteConfig(siteInfo, context) {
       new CopyPlugin({
         patterns: [
           {
-            from: resolve(rootDir, "public"),
-            to: resolve(rootDir, "dist"),
+            from: resolve(sitePath, "public"),
+            to: siteInfo.outputPath,
             globOptions: {
               ignore: ["**/index.html"],
             },
