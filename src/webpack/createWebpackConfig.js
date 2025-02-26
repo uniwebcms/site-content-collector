@@ -96,13 +96,27 @@ export default async function createWebpackConfig(
   log(`Building in ${mode} mode...`);
 
   try {
-    const moduleConfigs = []; //buildUtils.buildModuleConfigs(env, context);
+    // Get the array of module configs (synchronous)
+    const moduleConfigs = buildUtils.buildModuleConfigs(env, context);
+
+    // Wait for the site configs (async)
     const siteConfigs = await buildUtils.buildSiteConfigs(env, context);
-    const configs = [...moduleConfigs, ...siteConfigs];
+
+    // Create the combined config array
+    let configs = [...moduleConfigs, ...siteConfigs];
 
     if (!isProduction) {
-      configs.push(buildUtils.buildServerConfig(argv, context));
+      // Add server config (synchronous)
+      const serverConfig = buildUtils.buildServerConfig(argv, context);
+      configs.push(serverConfig);
     }
+
+    // Ensure all configs are fully resolved (in case any are Promises)
+    configs = await Promise.all(
+      configs.map(async (config) => {
+        return config instanceof Promise ? await config : config;
+      })
+    );
 
     log(`Building all ${configs.length} webpack config objects...\n`);
 
