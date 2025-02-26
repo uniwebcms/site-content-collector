@@ -141,18 +141,24 @@ function createProductionPlugins(moduleInfo) {
  * Create development-specific plugins
  * @returns {Array} Array of webpack plugins
  */
-function createDevelopmentPlugins() {
-  return [
-    // Enable gzip compression for testing
-    new CompressionPlugin({
-      filename: "[path][base].gzip",
-      algorithm: "gzip",
-      test: /\.(js|css|html|svg)$/,
-      threshold: WEBPACK.GZIP_THRESHOLD,
-      minRatio: 0.8,
-      deleteOriginalAssets: false,
-    }),
-  ];
+function createDevelopmentPlugins(context) {
+  const plugins = [];
+
+  if (context.compress) {
+    plugins.push(
+      // Enable gzip compression for testing
+      new CompressionPlugin({
+        filename: "[path][base].gzip",
+        algorithm: "gzip",
+        test: /\.(js|css|html|svg)$/,
+        threshold: WEBPACK.GZIP_THRESHOLD,
+        minRatio: 0.8,
+        deleteOriginalAssets: false,
+      })
+    );
+  }
+
+  return plugins;
 }
 
 /**
@@ -165,7 +171,7 @@ export function getPlugins(moduleInfo, context) {
 
   const modeSpecificPlugins = context.isProduction
     ? createProductionPlugins(moduleInfo)
-    : createDevelopmentPlugins();
+    : createDevelopmentPlugins(context);
 
   return [...commonPlugins, ...modeSpecificPlugins, ...context.userPlugins];
 }

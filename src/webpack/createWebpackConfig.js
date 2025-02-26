@@ -85,6 +85,7 @@ export default async function createWebpackConfig(
     mode,
     isProduction,
     isTunnel: !!argv.tunnel,
+    compress: !!argv.compress,
     rootDir,
     outputDir: path.join(rootDir, relOutDir),
     buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
