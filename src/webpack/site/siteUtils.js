@@ -34,14 +34,10 @@ import { loadSiteConfig } from "./site-config-loader.js";
 /**
  * Find all valid site directories and return their information
  * @param {string} srcDir - Source directory to search for sites
- * @param {Object} options - Optional configuration
- * @param {boolean} options.debug - Enable debug logging (default: false)
+ * @param {Object} context - Build context
  * @returns {Promise<Array>} - Array of site information objects
  */
-async function findSites(srcDir, options = {}) {
-  const { debug = false } = options;
-  const log = debug ? console.log : () => {};
-
+async function findSites(srcDir, { log }) {
   try {
     if (!fs.existsSync(srcDir)) {
       log(`Directory doesn't exist: ${srcDir}`);
@@ -155,20 +151,17 @@ async function getSiteInfo(srcDir, siteName = null) {
 /**
  * Determines which sites to build based on the target specification
  * @param {string} targetSite - Target site specification (comma-separated names or "*" for all)
- * @param {string} rootDir - Root directory of the project
- * @param {Object} options - Optional configuration
- * @param {boolean} options.debug - Enable debug logging (default: false)
+ * @param {Object} context - Build configuration
  * @returns {Promise<Array>} - Array of site information objects to build
  */
-export async function getSitesToBuild(targetSite, rootDir, options = {}) {
-  const { debug = false } = options;
-  const log = debug ? console.log : () => {};
+export async function getSitesToBuild(targetSite, context) {
+  const { rootDir, log } = context;
 
   log(`Finding sites to build with target: ${targetSite}`);
 
   // Get all available sites
   const sitesDir = path.join(rootDir, "sites");
-  const availableSites = await findSites(sitesDir, { debug });
+  const availableSites = await findSites(sitesDir, context);
 
   // Check if root directory is also a site (using synchronous fs)
   const rootSiteYmlPath = path.join(rootDir, "site.yml");
@@ -191,7 +184,7 @@ export async function getSitesToBuild(targetSite, rootDir, options = {}) {
 
   // Case 1: Build all sites
   if (targetSite === "*") {
-    log(`Building all ${availableSites.length} sites...\n`);
+    log(`Collected ${availableSites.length} sites`);
     return availableSites;
   }
 
@@ -207,7 +200,7 @@ export async function getSitesToBuild(targetSite, rootDir, options = {}) {
     );
 
     log(
-      `Building ${sitesToBuild.length} of ${specifiedSites.length} specified sites...\n`
+      `Collected ${sitesToBuild.length} of ${specifiedSites.length} specified sites`
     );
 
     // Warn about any specified sites that weren't found
@@ -229,7 +222,11 @@ export async function getSitesToBuild(targetSite, rootDir, options = {}) {
   }
 
   // Case 3: No module specified, use first available
-  log(`No target site specified, building ${availableSites[0].name}...\n`);
+  log(
+    `No target site specified, collected: ${
+      availableSites[0].name || "root site"
+    }`
+  );
   return [availableSites[0]];
 }
 

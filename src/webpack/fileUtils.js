@@ -38,3 +38,34 @@ export function normalizeUrl(url) {
 
   return href.endsWith("/") ? href.slice(0, -1) : href;
 }
+
+export function getProdBaseUrl(rootDir, argv, env) {
+  let { PUBLIC_URL, CF_PAGES_URL, CF_PAGES_BRANCH, GH_PAGES_URL } = env;
+
+  PUBLIC_URL ??= getDevBaseUrl(rootDir, argv, env);
+  PUBLIC_URL = normalizeUrl(PUBLIC_URL);
+  CF_PAGES_URL = normalizeUrl(CF_PAGES_URL);
+  GH_PAGES_URL = normalizeUrl(GH_PAGES_URL);
+
+  if (CF_PAGES_BRANCH !== "main" && CF_PAGES_BRANCH !== "master")
+    CF_PAGES_URL = null;
+
+  return CF_PAGES_URL || GH_PAGES_URL || PUBLIC_URL;
+}
+
+export function getDevBaseUrl(rootDir, argv, env) {
+  let { TUNNEL_URL, DEV_SERVER_PORT } = env;
+
+  const port = parseInt(argv.port) || DEV_SERVER_PORT || 3005;
+  const isTunnel = !!argv.tunnel;
+
+  if (!isTunnel) return normalizeUrl(`http://localhost:${port}`);
+
+  TUNNEL_URL ??= readConfigFile(
+    path.join(rootDir, PATHS.BUILD_DEV, "quick-tunnel.txt")
+  );
+
+  return normalizeUrl(TUNNEL_URL);
+}
+
+export default { getDevBaseUrl, getProdBaseUrl, normalizeUrl, readConfigFile };
