@@ -90,18 +90,16 @@ export default class CleanOldBuildsAndLogPlugin {
   }
 
   createSchemaFolder(logger) {
-    const schemaDir = path.join(this.options.outputPath, "_site");
-
-    if (fs.existsSync(schemaDir)) {
-      fs.unlinkSync(schemaDir);
-    }
-
-    const buildDir = path.join(
-      this.options.outputPath,
-      this.options.currentBuildUuid
-    );
-
-    fs.symlinkSync(buildDir, schemaDir, "dir");
+    // logger.warn(`out path "${this.options.outputPath}"`);
+    // const schemaDir = path.join(this.options.outputPath, "_site");
+    // if (fs.existsSync(schemaDir)) {
+    //   fs.unlinkSync(schemaDir);
+    // }
+    // const buildDir = path.join(
+    //   this.options.outputPath,
+    //   this.options.currentBuildUuid
+    // );
+    // fs.symlinkSync(buildDir, schemaDir, "dir");
   }
 
   deleteFolderRecursive(folderPath) {

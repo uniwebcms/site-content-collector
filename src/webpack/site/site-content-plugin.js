@@ -5,7 +5,7 @@ import { watch } from "fs";
 
 class SiteContentPlugin {
   constructor(options = {}) {
-    this.sourcePath = "./";
+    this.sourcePath = options.sitePath || "./";
     this.contentPath = "pages";
     this.injectToHtml = options.injectToHtml ?? false;
     this.variableName = options.variableName ?? "__SITE_CONTENT__";

@@ -62,12 +62,12 @@ export default function createModuleConfig(moduleInfo, context) {
 
     // Development server
     // ...(isProduction ? {} : { devServer: getDevServerConfig(context) }),
-    watch: !isProduction,
-    watchOptions: {
-      // ignored: /node_modules/,
-      aggregateTimeout: 300,
-      poll: false,
-    },
+    // watch: !isProduction,
+    // watchOptions: {
+    //   // ignored: /node_modules/,
+    //   aggregateTimeout: 300,
+    //   poll: false,
+    // },
 
     // Build reporting
     stats: isProduction ? "normal" : "minimal",

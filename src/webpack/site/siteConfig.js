@@ -138,6 +138,7 @@ async function createSiteConfig(siteInfo, context) {
 
       // Process and inject site content
       new SiteContentPlugin({
+        sitePath,
         injectToHtml: true, // Optional: inject into HTML (requires html-webpack-plugin)
         variableName: "__SITE_CONTENT__", // Optional: global variable name when injecting
         filename: "site-content.json", // Optional: output filename when not injecting
@@ -193,12 +194,12 @@ async function createSiteConfig(siteInfo, context) {
     //   port: devServerUrl.port,
     //   host: devServerUrl.hostname,
     // },
-    watch: !isProduction,
-    watchOptions: {
-      // ignored: /node_modules/,
-      aggregateTimeout: 300,
-      poll: false,
-    },
+    // watch: !isProduction,
+    // watchOptions: {
+    //   // ignored: /node_modules/,
+    //   aggregateTimeout: 300,
+    //   poll: false,
+    // },
 
     optimization: {
       moduleIds: "deterministic",

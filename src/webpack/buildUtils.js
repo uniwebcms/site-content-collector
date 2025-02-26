@@ -61,32 +61,24 @@ async function buildSiteConfigs(env, context) {
   return sites.flatMap((siteInfo) => createSiteConfig(siteInfo, context));
 }
 
-function buildServerConfig() {
-  const serverConfig = {
-    name: "dev-server",
-    mode: "development",
-    // No entry needed for just serving files
-    entry: {},
-    output: {},
-    devServer: {
-      static: {
-        directory: context.outputDir,
-        watch: true,
-      },
-      port: parseInt(argv.port) || 3000,
-      host: "localhost",
-      hot: true,
-      historyApiFallback: true,
-      // Set headers for CORS and module federation
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-      },
-      devMiddleware: {
-        writeToDisk: true,
-      },
+function buildServerConfig(argv, context) {
+  return {
+    static: {
+      directory: context.outputDir,
+      watch: true,
     },
-    // You can add plugins that are helpful for development here
-    plugins: [],
+    compress: context.isTunnel, // Enable gzip compression for all served files
+    port: parseInt(argv.port) || 3000,
+    host: "localhost",
+    hot: true,
+    historyApiFallback: true,
+    // Set headers for CORS and module federation
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
+    devMiddleware: {
+      writeToDisk: true,
+    },
   };
 }
 

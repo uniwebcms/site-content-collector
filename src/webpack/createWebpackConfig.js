@@ -84,6 +84,7 @@ export default async function createWebpackConfig(
     webpack,
     mode,
     isProduction,
+    isTunnel: !!argv.tunnel,
     rootDir,
     outputDir: path.join(rootDir, relOutDir),
     buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
@@ -105,12 +106,6 @@ export default async function createWebpackConfig(
     // Create the combined config array
     let configs = [...moduleConfigs, ...siteConfigs];
 
-    if (!isProduction) {
-      // Add server config (synchronous)
-      const serverConfig = buildUtils.buildServerConfig(argv, context);
-      configs.push(serverConfig);
-    }
-
     // Ensure all configs are fully resolved (in case any are Promises)
     configs = await Promise.all(
       configs.map(async (config) => {
@@ -119,6 +114,14 @@ export default async function createWebpackConfig(
     );
 
     log(`Building all ${configs.length} webpack config objects...\n`);
+
+    if (configs.length) {
+      // Add server config (synchronous)
+      configs[0].devServer = buildUtils.buildServerConfig(argv, context);
+      // Add server config (synchronous)
+      // const serverConfig = buildUtils.buildServerConfig(argv, context);
+      // configs.push(serverConfig);
+    }
 
     // Return single config or array based on number of configs
     return configs.length === 1 ? configs[0] : configs;
