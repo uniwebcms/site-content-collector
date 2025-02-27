@@ -206,19 +206,20 @@ async function createSiteConfig(siteInfo, context) {
     //   poll: false,
     // },
 
-    optimization: {
-      moduleIds: "deterministic",
-      runtimeChunk: "single",
-      splitChunks: {
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendors",
-            chunks: "all",
-          },
-        },
-      },
-    },
+    // Does not work with localhost remotes
+    // optimization: {
+    //   moduleIds: "deterministic",
+    //   runtimeChunk: "single",
+    //   splitChunks: {
+    //     cacheGroups: {
+    //       vendor: {
+    //         test: /[\\/]node_modules[\\/]/,
+    //         name: "vendors",
+    //         chunks: "all",
+    //       },
+    //     },
+    //   },
+    // },
   };
 }
 

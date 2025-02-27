@@ -229,12 +229,13 @@ function refreshDynamicExports(moduleInfo) {
 
 /**
  * Determines which modules to build based on target and available modules
- * @param {string} targetModule - Target module specification
- * @param {string} rootDir - Project's root directory
  * @returns {string[]} Array of module names to build
- * @throws {Error} If no modules are available
  */
-function getModulesToBuild(targetModule, rootDir) {
+function getModulesToBuild(context) {
+  const { targetModules, rootDir } = context;
+
+  if (!targetModules.length) return [];
+
   // Get all available modules
   const availableModules = [
     ...findModules(path.join(rootDir, "src")),
@@ -247,27 +248,16 @@ function getModulesToBuild(targetModule, rootDir) {
   }
 
   // Case 1: Build all modules
-  if (targetModule === "*") {
+  if (targetModules[0] === "*") {
     console.log(`Building all ${availableModules.length} modules...`);
     return availableModules;
   }
 
   // Case 2: Build specific modules
-  const specifiedModules = targetModule
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
-
-  if (specifiedModules.length > 0) {
-    console.log(`Building ${specifiedModules.length} module(s)...`);
-    return availableModules.filter((module) =>
-      specifiedModules.includes(module.name)
-    );
-  }
-
-  // Case 3: No module specified, use first available
-  console.log("No target module specified, building first available module...");
-  return [availableModules[0]];
+  console.log(`Building ${targetModules.length} module(s)...`);
+  return availableModules.filter((module) =>
+    targetModules.includes(module.name)
+  );
 }
 
 export default {

@@ -55,6 +55,7 @@ async function loadSiteConfig(sitePath) {
       // If version is 'latest', fetch the current hash
       if (version === "latest") {
         const versionUrl = `${url}/${module}/latest_version.txt`;
+        console.log(`Reading latest version from ${versionUrl}`);
         const response = await fetch(versionUrl);
 
         if (!response.ok) {

@@ -21,6 +21,13 @@ function getBuildMode(argv) {
   return isMainBranch ? BUILD_MODES.PRODUCTION : BUILD_MODES.DEVELOPMENT;
 }
 
+function splitNames(names) {
+  return names
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
 /**
  * Generates webpack configuration objects with predefined settings and plugins.
  *
@@ -67,6 +74,8 @@ export default async function createWebpackConfig(
     throw new Error("Invalid root directory");
   }
 
+  // const { WEBPACK_SERVE = false, site = null, module = null } = argv.env || {};
+  const props = argv.env || {};
   const mode = getBuildMode(argv);
   const isProduction = mode === BUILD_MODES.PRODUCTION;
   const relOutDir = isProduction ? PATHS.DIST : PATHS.BUILD_DEV;
@@ -80,6 +89,14 @@ export default async function createWebpackConfig(
     ? fileUtils.getProdBaseUrl(rootDir, argv, env)
     : fileUtils.getDevBaseUrl(rootDir, argv, env);
 
+  const targetSites = splitNames(
+    props.site ?? props.sites ?? env.TARGET_SITE ?? ""
+  );
+
+  const targetModules = splitNames(
+    props.module ?? props.modules ?? env.TARGET_MODULE ?? ""
+  );
+
   // Setup build context
   const context = {
     webpack,
@@ -87,6 +104,9 @@ export default async function createWebpackConfig(
     isProduction,
     isTunnel: !!argv.tunnel,
     compress: !!argv.compress,
+    isServeMode: props.WEBPACK_SERVE, // defined by webpack
+    targetSites,
+    targetModules,
     rootDir,
     outputDir: path.join(rootDir, relOutDir),
     buildDevDir: path.resolve(rootDir, PATHS.BUILD_DEV),
@@ -100,12 +120,14 @@ export default async function createWebpackConfig(
   logger.info(`Building in ${mode} mode...`);
   logger.group();
 
+  logger.info(`argv`, argv);
+
   try {
     // Get the array of module configs (synchronous)
-    const moduleConfigs = buildUtils.buildModuleConfigs(env, context);
+    const moduleConfigs = buildUtils.buildModuleConfigs(context);
 
     // Wait for the site configs (async)
-    const siteConfigs = await buildUtils.buildSiteConfigs(env, context);
+    const siteConfigs = await buildUtils.buildSiteConfigs(context);
 
     // Create the combined config array
     let configs = [...moduleConfigs, ...siteConfigs];
@@ -123,6 +145,16 @@ export default async function createWebpackConfig(
     if (configs.length) {
       // Add server config (synchronous)
       configs[0].devServer = buildUtils.buildServerConfig(argv, context);
+      configs[0].watchOptions = {
+        ignored: [
+          `**/${PATHS.NODE_MODULES}/**`,
+          `**/${PATHS.DIST}/**`,
+          `**/${PATHS.BUILD_DEV}/**`,
+          "**/.git/**",
+        ],
+        aggregateTimeout: 300,
+        poll: false, // Use filesystem events
+      };
       // Add server config (synchronous)
       // const serverConfig = buildUtils.buildServerConfig(argv, context);
       // configs.push(serverConfig);

@@ -12,7 +12,7 @@ import { getBuildOptimizations } from "./optimizationBuilder.js";
  */
 export default function createModuleConfig(moduleInfo, context) {
   const { variant, buildId: uuid } = moduleInfo;
-  const { isProduction } = context;
+  const { isProduction, logger } = context;
   const moduleName = moduleInfo.name;
 
   // Add extra info to the module specs
@@ -24,6 +24,8 @@ export default function createModuleConfig(moduleInfo, context) {
 
   // Make sure that the `dynamicExports.js` file of the module is up to date
   moduleUtils.refreshDynamicExports(moduleInfo);
+
+  logger.warn("publicUrl", moduleInfo.publicUrl);
 
   return {
     name: variant ? `${moduleName}-${variant}` : moduleName,

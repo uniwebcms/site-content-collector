@@ -68,7 +68,7 @@ async function findSites(srcDir, { log }) {
     }
 
     // Process site info (getSiteInfo is still async)
-    log(`Processing ${validDirents.length} sites`);
+    // log(`Processing ${validDirents.length} sites`);
     const sitesPromises = validDirents.map((dirent) =>
       getSiteInfo(srcDir, dirent.name)
     );
@@ -150,14 +150,15 @@ async function getSiteInfo(srcDir, siteName = null) {
 
 /**
  * Determines which sites to build based on the target specification
- * @param {string} targetSite - Target site specification (comma-separated names or "*" for all)
  * @param {Object} context - Build configuration
  * @returns {Promise<Array>} - Array of site information objects to build
  */
-export async function getSitesToBuild(targetSite, context) {
-  const { rootDir, log } = context;
+export async function getSitesToBuild(context) {
+  const { rootDir, log, targetSites } = context;
 
-  log(`Finding sites to build with target: ${targetSite}`);
+  if (!targetSites.length) return [];
+
+  // log(`Finding sites to build with target:`,targetSites);
 
   // Get all available sites
   const sitesDir = path.join(rootDir, "sites");
@@ -183,51 +184,45 @@ export async function getSitesToBuild(targetSite, context) {
   log(`Found ${availableSites.length} available sites`);
 
   // Case 1: Build all sites
-  if (targetSite === "*") {
+  if (targetSites[0] === "*") {
     log(`Collected ${availableSites.length} sites`);
     return availableSites;
   }
 
   // Case 2: Build specific sites
-  const specifiedSites = targetSite
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
+  const sitesToBuild = availableSites.filter((site) =>
+    targetSites.includes(site.siteName)
+  );
 
-  if (specifiedSites.length > 0) {
-    const sitesToBuild = availableSites.filter((site) =>
-      specifiedSites.includes(site.name)
+  log(
+    `Collected ${sitesToBuild.length} of ${targetSites.length} specified sites`
+  );
+
+  // Warn about any specified sites that weren't found
+  const foundSiteNames = sitesToBuild.map((site) => site.siteName);
+  const missingNames = targetSites.filter(
+    (name) => !foundSiteNames.includes(name)
+  );
+
+  if (missingNames.length > 0) {
+    // Use console.warn for warnings even in debug mode, as these are important
+    console.warn(
+      `Warning: Could not find the following specified sites: ${missingNames.join(
+        ", "
+      )}`
     );
-
-    log(
-      `Collected ${sitesToBuild.length} of ${specifiedSites.length} specified sites`
-    );
-
-    // Warn about any specified sites that weren't found
-    const foundSiteNames = sitesToBuild.map((site) => site.name);
-    const missingNames = specifiedSites.filter(
-      (name) => !foundSiteNames.includes(name)
-    );
-
-    if (missingNames.length > 0) {
-      // Use console.warn for warnings even in debug mode, as these are important
-      console.warn(
-        `Warning: Could not find the following specified sites: ${missingNames.join(
-          ", "
-        )}`
-      );
-    }
-
-    return sitesToBuild;
   }
 
+  return sitesToBuild;
+
   // Case 3: No module specified, use first available
-  log(
-    `No target site specified, collected: ${
-      availableSites[0].name || "root site"
-    }`
-  );
-  return [availableSites[0]];
+  // log(
+  //   `No target site specified, collected: ${
+  //     availableSites[0].name || "root site"
+  //   }`
+  // );
+  // return [availableSites[0]];
+  return [];
 }
 
 export default { getSitesToBuild };

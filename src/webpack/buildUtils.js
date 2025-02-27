@@ -33,11 +33,11 @@ function buildModuleVariantConfig(moduleInfo, context) {
   );
 }
 
-function buildModuleConfigs(env, context) {
-  const targetModule = env.TARGET_MODULES || env.TARGET_MODULE || "*";
+function buildModuleConfigs(context) {
+  // const targetModule = env.TARGET_MODULE ?? env.TARGET_MODULES ?? "*";
 
   // Determine which modules to build
-  const modules = moduleUtils.getModulesToBuild(targetModule, context.rootDir);
+  const modules = moduleUtils.getModulesToBuild(context);
 
   // Build configurations for modules
   return modules.flatMap((moduleInfo) =>
@@ -51,11 +51,9 @@ function buildModuleConfigs(env, context) {
  * @param {Object} context - Build context
  * @returns {Promise<Array>} - Array of site configurations
  */
-async function buildSiteConfigs(env, context) {
-  const targetSite = env.TARGET_SITES || env.TARGET_SITE || "*";
-
+async function buildSiteConfigs(context) {
   // Determine which sites to build (now awaiting the async function)
-  const sites = await siteUtils.getSitesToBuild(targetSite, context);
+  const sites = await siteUtils.getSitesToBuild(context);
 
   // Build configurations for sites
   return sites.flatMap((siteInfo) => createSiteConfig(siteInfo, context));

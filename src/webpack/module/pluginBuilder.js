@@ -30,8 +30,16 @@ function createModuleFederationPlugin(moduleInfo, context) {
   const { exposes, packageJson } = moduleInfo;
   const { ModuleFederationPlugin } = context.webpack.container;
 
+  // context.logger.info(
+  //   "PARAMS",
+  //   packageJson.dependencies?.react,
+  //   WEBPACK.MODULE_FEDERATION.SHARED_DEPS.react
+  // );
+  context.logger.warn("exposes", exposes, FILES.REMOTE_ENTRY);
+
   return new ModuleFederationPlugin({
-    name: moduleInfo.name,
+    //name: moduleInfo.name,
+    name: "WebsiteRemote",
     filename: FILES.REMOTE_ENTRY,
     exposes,
     shared: {
@@ -81,10 +89,10 @@ function createCommonPlugins(moduleInfo, context) {
 
     // Manage builds and logging
     new CleanAndLogPlugin({
-      outputPath: moduleInfo.outputPath,
+      outputPath: path.dirname(moduleInfo.outputPath),
       publicUrl: moduleInfo.publicUrl,
       currentBuildUuid: moduleInfo.buildId,
-      keepBuilds: 2,
+      keepBuilds: 20,
     }),
   ];
 }
