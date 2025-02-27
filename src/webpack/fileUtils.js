@@ -26,17 +26,17 @@ export function readConfigFile(filename) {
 export function normalizeUrl(url) {
   if (!url) return "";
 
-  try {
-    url = new URL(url);
-  } catch (error) {
-    console.log(`Invalid URL '${url}'`);
-    console.log(error);
-    return false;
-  }
+  return new URL(url).toString();
+  // try {
+  //   url = new URL(url);
+  // } catch (error) {
+  //   console.log(`Invalid URL:`, url, error);
+  //   return null;
+  // }
 
-  const href = `${url.protocol}//${url.hostname}${url.pathname}`;
+  // const href = `${url.protocol}//${url.hostname}${url.pathname}`;
 
-  return href.endsWith("/") ? href.slice(0, -1) : href;
+  // return href.endsWith("/") ? href.slice(0, -1) : href;
 }
 
 export function getProdBaseUrl(rootDir, argv, env) {
@@ -56,7 +56,7 @@ export function getProdBaseUrl(rootDir, argv, env) {
 export function getDevBaseUrl(rootDir, argv, env) {
   let { TUNNEL_URL, DEV_SERVER_PORT } = env;
 
-  const port = parseInt(argv.port) || DEV_SERVER_PORT || 3005;
+  const port = parseInt(argv.port) || DEV_SERVER_PORT || 3000;
   const isTunnel = !!argv.tunnel;
 
   if (!isTunnel) return normalizeUrl(`http://localhost:${port}`);

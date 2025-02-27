@@ -248,7 +248,7 @@ function getModulesToBuild(targetModule, rootDir) {
 
   // Case 1: Build all modules
   if (targetModule === "*") {
-    console.log("Building all modules...\n");
+    console.log(`Building all ${availableModules.length} modules...`);
     return availableModules;
   }
 
@@ -259,16 +259,14 @@ function getModulesToBuild(targetModule, rootDir) {
     .filter(Boolean);
 
   if (specifiedModules.length > 0) {
-    console.log(`Building ${specifiedModules.length} module(s)...\n`);
+    console.log(`Building ${specifiedModules.length} module(s)...`);
     return availableModules.filter((module) =>
       specifiedModules.includes(module.name)
     );
   }
 
   // Case 3: No module specified, use first available
-  console.log(
-    "No target module specified, building first available module...\n"
-  );
+  console.log("No target module specified, building first available module...");
   return [availableModules[0]];
 }
 

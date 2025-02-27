@@ -19,7 +19,7 @@ async function createSiteConfig(siteInfo, context) {
   const relOutPath = siteName ? `sites/${siteName}` : "";
 
   // Add extra info to the module specs
-  siteInfo.publicUrl = context.basePublicUrl + `/${relOutPath}`;
+  siteInfo.publicUrl = context.basePublicUrl + `${relOutPath}/`;
   siteInfo.outputPath = join(context.outputDir, relOutPath);
 
   // Extract webpack plugins
@@ -156,6 +156,11 @@ async function createSiteConfig(siteInfo, context) {
             },
           },
         ],
+      }),
+
+      new context.webpack.DefinePlugin({
+        // APP_VERSION: JSON.stringify(siteInfo.packageJson.version),
+        SITE_BASENAME: JSON.stringify(relSitePath),
       }),
 
       // Configure module federation for remote component loading

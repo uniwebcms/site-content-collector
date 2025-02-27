@@ -3,7 +3,7 @@ import pluginBuilder from "./pluginBuilder.js";
 import loaderBuilder from "./loaderBuilder.js";
 import moduleUtils from "./moduleUtils.js";
 import { getBuildOptimizations } from "./optimizationBuilder.js";
-import { getDevServerConfig } from "./devServerBuilder.js";
+// import { getDevServerConfig } from "./devServerBuilder.js";
 
 /**
  * Creates a webpack configuration for a single module variant
@@ -16,7 +16,7 @@ export default function createModuleConfig(moduleInfo, context) {
   const moduleName = moduleInfo.name;
 
   // Add extra info to the module specs
-  moduleInfo.publicUrl = context.basePublicUrl + `/${moduleName}/${uuid}`;
+  moduleInfo.publicUrl = context.basePublicUrl + `${moduleName}/${uuid}/`;
 
   moduleInfo.outputPath =
     path.join(context.outputDir, moduleName, uuid) +

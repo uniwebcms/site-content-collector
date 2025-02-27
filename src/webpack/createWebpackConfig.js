@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import fileUtils from "./fileUtils.js";
 import buildUtils from "./buildUtils.js";
 import { PATHS, BUILD_MODES } from "./constants.js";
+import { logger } from "../logger.js";
 
 function getBuildMode(argv) {
   if (argv.mode && Object.values(BUILD_MODES).includes(argv.mode))
@@ -92,10 +93,12 @@ export default async function createWebpackConfig(
     userPlugins,
     basePublicUrl,
     debug,
+    logger,
     log,
   };
 
-  log(`Building in ${mode} mode...`);
+  logger.info(`Building in ${mode} mode...`);
+  logger.group();
 
   try {
     // Get the array of module configs (synchronous)
@@ -114,7 +117,8 @@ export default async function createWebpackConfig(
       })
     );
 
-    log(`Building all ${configs.length} webpack config objects...\n`);
+    logger.groupEnd();
+    logger.info(`Building all ${configs.length} webpack config objects...\n`);
 
     if (configs.length) {
       // Add server config (synchronous)
