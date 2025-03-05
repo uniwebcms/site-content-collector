@@ -33,20 +33,29 @@ Uniweb creates a clean runtime connection between content and components:
 
 ```markdown
 ---
-component: ProductCard
+component: ProductSection
 featured: true
 ---
 
-# Premium Headphones
+# Featured Products
 
-Experience studio-quality sound with our premium noise-canceling headphones.
+Our most popular items this season.
 
-![Headphones](./product-image.jpg)
+- Free shipping on all items
+- 30-day money back guarantee
+- 24/7 customer support
 
-## Features
+## Wireless Headphones
 
-- 24-hour battery life
-- Active noise cancellation
+Premium sound with 24-hour battery life.
+![Headphones](./headphones.jpg)
+[Learn more](#)
+
+## Smart Speaker
+
+Voice-controlled assistant for your home.
+![Speaker](./speaker.jpg)
+[Learn more](#)
 ```
 
 ### How It's Parsed
@@ -55,19 +64,26 @@ Experience studio-quality sound with our premium noise-canceling headphones.
 // This is how the markdown is structured for components
 content = {
   main: {
-    title: "Premium Headphones",
-    text: "Experience studio-quality sound with our premium noise-canceling headphones.",
-    images: [
-      {
-        alt: "Headphones",
-        src: "/pages/product/product-image.jpg",
-      },
+    title: "Featured Products",
+    text: "Our most popular items this season.",
+    list: [
+      "Free shipping on all items",
+      "30-day money back guarantee",
+      "24/7 customer support",
     ],
   },
-  segments: [
+  subs: [
     {
-      title: "Features",
-      list: ["24-hour battery life", "Active noise cancellation"],
+      title: "Wireless Headphones",
+      text: "Premium sound with 24-hour battery life.",
+      images: [{ alt: "Headphones", src: "/pages/products/headphones.jpg" }],
+      links: [{ text: "Learn more", href: "#" }],
+    },
+    {
+      title: "Smart Speaker",
+      text: "Voice-controlled assistant for your home.",
+      images: [{ alt: "Speaker", src: "/pages/products/speaker.jpg" }],
+      links: [{ text: "Learn more", href: "#" }],
     },
   ],
 };
@@ -76,18 +92,36 @@ content = {
 ### Component Side
 
 ```javascript
-function ProductCard({ content, params }) {
-  const { title, text, images } = content.main;
+function ProductSection({ content, params }) {
+  const { main, subs } = content;
   const { featured } = params;
-  const [mainImage] = images;
 
   return (
-    <Card highlight={featured}>
-      <CardHeader>{title}</CardHeader>
-      {mainImage && <CardImage src={mainImage.src} alt={mainImage.alt} />}
-      <CardBody>{text}</CardBody>
-      <FeatureList segments={content.segments} />
-    </Card>
+    <section className={featured ? "featured-section" : "regular-section"}>
+      <SectionHeader title={main.title} description={main.text} />
+
+      {main.list.length > 0 && (
+        <div className="benefits">
+          {main.list.map((item, i) => (
+            <div key={i} className="benefit-item">
+              <CheckIcon /> {item}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="product-grid">
+        {subs.map((product, i) => (
+          <ProductCard
+            key={i}
+            title={product.title}
+            description={product.text}
+            image={product.images[0]}
+            link={product.links[0]}
+          />
+        ))}
+      </div>
+    </section>
   );
 }
 ```
@@ -97,7 +131,8 @@ function ProductCard({ content, params }) {
 1. **One Site, One Library**: Each content site connects to exactly one component library module
 2. **Runtime Loading**: Components load at runtime, not build time
 3. **Clear Contract**: Content structure is predictable, components have a defined API
-4. **Independent Updates**: Content and components can be updated separately
+4. **Content Structure**: Markdown is parsed into a `main` part and `subs` parts
+5. **Independent Updates**: Content and components can be updated separately
 
 ## 👥 For Content Teams
 
