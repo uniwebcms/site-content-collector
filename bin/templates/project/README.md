@@ -41,24 +41,52 @@ featured: true
 
 Experience studio-quality sound with our premium noise-canceling headphones.
 
+![Headphones](./product-image.jpg)
+
 ## Features
 
 - 24-hour battery life
 - Active noise cancellation
 ```
 
+### How It's Parsed
+
+```javascript
+// This is how the markdown is structured for components
+content = {
+  main: {
+    title: "Premium Headphones",
+    text: "Experience studio-quality sound with our premium noise-canceling headphones.",
+    images: [
+      {
+        alt: "Headphones",
+        src: "/pages/product/product-image.jpg",
+      },
+    ],
+  },
+  segments: [
+    {
+      title: "Features",
+      list: ["24-hour battery life", "Active noise cancellation"],
+    },
+  ],
+};
+```
+
 ### Component Side
 
 ```javascript
 function ProductCard({ content, params }) {
-  const { title, description } = content.main;
+  const { title, text, images } = content.main;
   const { featured } = params;
+  const [mainImage] = images;
 
   return (
     <Card highlight={featured}>
       <CardHeader>{title}</CardHeader>
-      <CardBody>{description}</CardBody>
-      <FeatureList items={content.items} />
+      {mainImage && <CardImage src={mainImage.src} alt={mainImage.alt} />}
+      <CardBody>{text}</CardBody>
+      <FeatureList segments={content.segments} />
     </Card>
   );
 }
@@ -92,16 +120,23 @@ Uniweb enables completely separate repositories for content and code:
 ```
 # Content Repository
 content-site/
-├── pages/            # Markdown content
-├── public/           # Static assets
-├── site.yml          # Points to your component library
-└── package.json      # Dependencies
+├── pages/              # Markdown content (each page is a folder)
+│   └── product/        # Example page folder
+│       ├── 1-intro.md  # Main content file
+│       ├── 2-specs.md  # Additional content file
+│       └── image.jpg   # Page-specific image
+├── public/             # Static assets (shared across pages)
+│   └── images/         # Shared images
+├── src/                # Minimal bootstrapping code
+├── site.yml            # Points to your component library
+├── package.json        # Dependencies
+└── webpack.config.js   # Site bundling config
 
 # Component Repository (can be hosted separately)
 component-library/
-├── src/              # Component source files
-├── package.json      # Dependencies
-└── webpack.config.js # Module bundling config
+├── src/                # Component source files
+├── package.json        # Dependencies
+└── webpack.config.js   # Module bundling config
 ```
 
 ## 🔧 Technical Implementation
