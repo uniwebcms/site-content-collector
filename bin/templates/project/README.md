@@ -1,222 +1,149 @@
-# Uniweb Framework Overview
+# Uniweb Framework
 
-## The Web Platform That Elegantly Separates Content From Code
+**Freedom for content creators. Flexibility for developers.**
 
-Uniweb is an innovative open-source web framework that brings harmony to the development process by creating a clean separation between content and code. This separation allows content teams and developers to work independently, each focusing on their areas of expertise.
+Uniweb solves a fundamental challenge in web development: keeping content and code separate while maintaining a cohesive website experience.
 
-## What Makes Uniweb Different
+## 🔍 The Problem
 
-Most web frameworks tightly couple content and code, requiring developer intervention for content changes. Uniweb takes a fundamentally different approach:
+In traditional web development:
 
-- **Content** is written in markdown files with front matter configuration
-- **Components** live in separate, reusable modules
-- They connect at runtime through a module federation system
+- Content changes require developer involvement
+- Component updates risk breaking content
+- Multiple sites duplicate component code
+- Content and development teams block each other
 
-This creates a web development workflow where:
+## 💡 The Uniweb Solution
 
-- Content teams can update content without developer involvement
-- Developers can improve components without disrupting content
-- Multiple sites can share the same component libraries
-- Teams can work in completely separate repositories if desired
-
-## How Uniweb Works
-
-Uniweb creates a clear separation between:
+Uniweb creates a clean runtime connection between content and components:
 
 ```
-┌─────────────────────┐     ┌─────────────────────┐
-│  Content Repository │     │   Code Repository   │
-│  ─────────────────  │     │  ─────────────────  │
-│                     │     │                     │
-│  - Markdown content │     │  - Components       │
-│  - Static assets    │ ◄── │  - Styling          │
-│  - Configuration    │     │  - Logic            │
-│                     │     │                     │
-└─────────────────────┘     └─────────────────────┘
+📄 Content (Markdown + Front Matter)
+   |
+   ▼
+🔗 Runtime Connection (Module Federation)
+   |
+   ▼
+🧩 Components (React Library)
 ```
 
-Content sites link to component modules at runtime using webpack module federation, allowing:
+## 🏗 Architecture in Action
 
-- Components to be updated without rebuilding sites
-- Multiple sites to share component libraries
-- Independent workflows for content and development teams
-
-### On the Content Side: Markdown with Front Matter
-
-Content creators work with simple markdown files that specify which component should render the content:
+### Content Side
 
 ```markdown
 ---
-component: ProductShowcase
-layout: grid
+component: ProductCard
 featured: true
 ---
 
-# Our Amazing Products
+# Premium Headphones
 
-Discover our exceptional product line that delivers unmatched performance.
+Experience studio-quality sound with our premium noise-canceling headphones.
 
-## Product One
+## Features
 
-This revolutionary product changes everything...
-
-## Product Two
-
-Our award-winning solution for demanding users...
+- 24-hour battery life
+- Active noise cancellation
 ```
 
-### On the Code Side: Structured Component Convention
-
-Developers create components that receive structured content and configuration parameters:
+### Component Side
 
 ```javascript
-function ProductShowcase({ content, params }) {
-  // Structured content automatically parsed from markdown
+function ProductCard({ content, params }) {
   const { title, description } = content.main;
-  const products = content.items;
-
-  // Parameters from front matter
-  const { layout = "grid", featured = false } = params;
+  const { featured } = params;
 
   return (
-    <div className={`product-showcase layout-${layout}`}>
-      <h2>{title}</h2>
-      <p>{description}</p>
-      <div className="product-grid">
-        {products.map((product) => (
-          <ProductCard product={product} featured={featured} />
-        ))}
-      </div>
-    </div>
+    <Card highlight={featured}>
+      <CardHeader>{title}</CardHeader>
+      <CardBody>{description}</CardBody>
+      <FeatureList items={content.items} />
+    </Card>
   );
 }
 ```
 
-## The Uniweb Ecosystem
+## 🔄 How It Works
 
-Uniweb provides a complete ecosystem for building content-driven websites:
+1. **One Site, One Library**: Each content site connects to exactly one component library module
+2. **Runtime Loading**: Components load at runtime, not build time
+3. **Clear Contract**: Content structure is predictable, components have a defined API
+4. **Independent Updates**: Content and components can be updated separately
 
-- **@uniwebcms/runtime**: React-based rendering engine with built-in routing, dynamic data fetching, and multilingual support
-- **@uniwebcms/basics**: Essential building block components
-- **@uniwebcms/toolkit**: CLI tools for project scaffolding and management
+## 👥 For Content Teams
 
-## Key Benefits
+- **True Independence**: Update content without developer help
+- **Simple Authoring**: Write in markdown with straightforward configuration
+- **Immediate Preview**: See changes instantly due to the runtime connection
+- **Consistent Experience**: Rely on components handling presentation
 
-For **content teams**:
+## 👨‍💻 For Developers
 
-- Update content without developer dependencies
-- Work in a content-focused environment
-- Configure components through simple front matter
-- Use components from any source
+- **Build Once, Use Everywhere**: Create component libraries for multiple sites
+- **Update Without Risk**: Improve components without rebuilding sites
+- **Clean Development**: Focus on component logic without content distractions
+- **Controlled Evolution**: Migrate components gradually with versioning
 
-For **developers**:
+## 📂 Independent Repository Structure
 
-- Create components once, use them across multiple sites
-- Update components without rebuilding sites
-- Work in a code-focused environment
-- Evolve components from specific to general naturally
-- Complete implementation freedom within components
-
-## Uniweb's Approach
-
-### Connected Through Convention
-
-Instead of a tightly coupled interface between content and code, Uniweb creates a convention-based contract:
-
-- Markdown is parsed into a predictable structure accessible via `content`
-- Front matter is parsed into a parameters object accessible via `params`
-- Components interpret this structure according to conventions
-
-### Independent Repositories
-
-This separation enables content and code to exist in completely separate repositories:
+Uniweb enables completely separate repositories for content and code:
 
 ```
-content-repository/
+# Content Repository
+content-site/
 ├── pages/            # Markdown content
 ├── public/           # Static assets
-├── site.yml          # Links to a remote module
-├── package.json      # Package configuration
-└── webpack.config.js # Site engine bundling configuration
+├── site.yml          # Points to your component library
+└── package.json      # Dependencies
 
-component-repository/
+# Component Repository (can be hosted separately)
+component-library/
 ├── src/              # Component source files
-├── package.json      # Package configuration
-└── webpack.config.js # Module bundling configuration
+├── package.json      # Dependencies
+└── webpack.config.js # Module bundling config
 ```
 
-Each site loads exactly one runtime module as its component library, which defines how all content should be presented. The module is referenced by a URL set in `site.yml`. Using a single library ensures design consistency and dependency compatibility across all components, from navigation and headers to content sections.
+## 🔧 Technical Implementation
 
-A site also includes Uniweb's core engine, which automatically handles infrastructure concerns like multilingual content, search, page hierarchy, and dynamic data management.
+At its core, Uniweb uses webpack 5 module federation to connect content and components at runtime, rather than bundling them together at build time. This creates a true separation of concerns while maintaining high performance.
 
-In summary, **a component library is a collection of components packaged as a runtime module**. Unlike traditional npm packages that are bundled at build time, this approach loads components at runtime.
+## 🛠 Ecosystem Components
 
-## Technical Implementation
+- **@uniwebcms/runtime**: Core rendering engine with routing and data handling
+- **@uniwebcms/basics**: Foundation components for common patterns
+- **@uniwebcms/toolkit**: Project scaffolding and management tools
 
-Under the hood, Uniweb uses webpack 5 module federation to implement the connection between an a site and its component library:
+## 🏁 Quick Start
 
-- Each site bundles the Uniweb runtime
-- A component library is loaded at runtime via remote module federation
-- The runtime parses markdown and provides structured content to components
-- Components render the content according to their implementation
-
-This creates a true separation of concerns while maintaining high performance.
-
-## When to Use This Approach
-
-Content/code separation is particularly valuable when:
-
-- Content teams need autonomy for frequent updates
-- Multiple sites share the same component library
-- Organizations have separate content and development teams
-- Projects need to evolve over a long lifespan
-- Consistency across many content pages is important
-
-## Getting Started
-
-This guide will walk you through setting up your first Uniweb project and creating a **site project** and a **module project** on the same repository.
-
-## Prerequisites
-
-Before you begin, make sure you have:
-
-- Node.js 16.x or higher
-- npm 7.x or higher
-- yarn 4.x or higher (recommended)
-
-## Installation
-
-First, install the Uniweb toolkit globally:
+The following example creates both a site and a module in the same project for development convenience. In production, these would typically exist in separate repositories.
 
 ```bash
+# Install the toolkit
 npm install -g @uniwebcms/toolkit
-```
 
-The `uniweb` command simplifies the process of scaffolding files and folders. Once you are familiar with the Uniweb Framework, you might may no longer need its help.
-
-Let's create a site and a module, add a component to the module, and a page to the site.
-
-Within a new git project:
-
-```bash
-# Initialize the project with a root-level site
+# Create your project with a site
 uniweb init site
 
-# Add a module project for a new component library named "my-lib"
-uniweb add module my-lib
+# Add a module for local development
+uniweb add module my-components
 
-# Connect the site with the module
-uniweb use my-lib
+# Connect the site to your local module
+uniweb use my-components
 
-# Create a component named "HeroSection" to your new library
-uniweb add component HeroSection
+# Add your first components
+uniweb add component Hero
+uniweb add component Features
 
-# Create a page named "home"
-uniweb add page home --component HeroSection
+# Create content using your components
+uniweb add page home --components "Hero, Features"
 
-# Create a hero section in the new home page
-uniweb add section hero -in home --component HeroSection
-
-# Start the dev server in watch mode
+# Start development
 uniweb dev
 ```
+
+For production setups, you would create separate repositories for your content site and component library, with the site referencing the deployed component library URL in its configuration.
+
+## 📚 Learn More
+
+Visit [uniweb.io](https://uniweb.io) or explore our [documentation](https://docs.uniweb.io).
