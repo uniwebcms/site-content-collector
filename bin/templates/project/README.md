@@ -128,7 +128,7 @@ content-site/
 ├── public/             # Static assets (shared across pages)
 │   └── images/         # Shared images
 ├── src/                # Minimal bootstrapping code
-├── site.yml            # Points to your component library
+├── site.yml            # Points to a remote component library
 ├── package.json        # Dependencies
 └── webpack.config.js   # Site bundling config
 
