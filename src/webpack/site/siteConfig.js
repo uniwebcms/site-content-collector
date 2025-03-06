@@ -38,9 +38,6 @@ async function createSiteConfig(siteInfo, context) {
     );
   }
 
-  const moduleUrl = siteConfig.components.url;
-  // console.log("siteConfig", siteConfig);
-
   return {
     mode,
     entry: "./" + join(relSitePath, "src/index.js"), //siteInfo.entryPath,
@@ -167,7 +164,7 @@ async function createSiteConfig(siteInfo, context) {
       new ModuleFederationPlugin({
         name: "site-builder",
         remotes: {
-          RemoteModule: `WebsiteRemote@${siteConfig.components.moduleUrl}/remoteEntry.js`,
+          RemoteModule: `WebsiteRemote@${siteConfig.moduleUrl}/remoteEntry.js`,
         },
         shared: {
           react: {

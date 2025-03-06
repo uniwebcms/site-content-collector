@@ -11,8 +11,10 @@ import createSiteConfig from "./site/siteConfig.js";
  * @returns {Object|Array} Webpack configuration(s)
  */
 function buildModuleVariantConfig(moduleInfo, context) {
+  const version = moduleInfo.packageJson.version;
+
   // Generate unique build identifier for each module
-  const buildId = uuidv4();
+  const buildId = version; //uuidv4();
 
   // Clone the module info because it will be extended as it's processed
   // Create configurations for each Tailwind variant (or single config if no variants)

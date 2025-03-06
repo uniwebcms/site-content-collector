@@ -37,7 +37,9 @@ import { loadSiteConfig } from "./site-config-loader.js";
  * @param {Object} context - Build context
  * @returns {Promise<Array>} - Array of site information objects
  */
-async function findSites(srcDir, { log }) {
+async function findSites(srcDir, context) {
+  const { log } = context;
+
   try {
     if (!fs.existsSync(srcDir)) {
       log(`Directory doesn't exist: ${srcDir}`);
@@ -70,7 +72,7 @@ async function findSites(srcDir, { log }) {
     // Process site info (getSiteInfo is still async)
     // log(`Processing ${validDirents.length} sites`);
     const sitesPromises = validDirents.map((dirent) =>
-      getSiteInfo(srcDir, dirent.name)
+      getSiteInfo(srcDir, dirent.name, context)
     );
 
     const sites = await Promise.all(sitesPromises);
@@ -87,7 +89,7 @@ async function findSites(srcDir, { log }) {
  * @param {string|null} [siteName] - Name of the site (defaults to null)
  * @returns {Object} Site information
  */
-async function getSiteInfo(srcDir, siteName = null) {
+async function getSiteInfo(srcDir, siteName, context) {
   const sitePath = siteName ? path.join(srcDir, siteName) : srcDir;
   const packageJsonPath = path.join(sitePath, FILES.PACKAGE_JSON);
   // const siteConfigPath = path.join(sitePath, FILES.SITE_CONFIG);
@@ -95,7 +97,7 @@ async function getSiteInfo(srcDir, siteName = null) {
   // Read package.json and site.yml
   const packageJson = readConfigFile(packageJsonPath);
   // const siteConfig = readConfigFile(siteConfigPath);
-  const siteConfig = await loadSiteConfig(sitePath);
+  const siteConfig = await loadSiteConfig(sitePath, context);
 
   if (!packageJson || !siteConfig) return null;
 
@@ -168,7 +170,7 @@ export async function getSitesToBuild(context) {
   const rootSiteYmlPath = path.join(rootDir, "site.yml");
   if (fs.existsSync(rootSiteYmlPath)) {
     log("Root directory contains a site.yml, adding as a site");
-    const rootSiteInfo = await getSiteInfo(rootDir);
+    const rootSiteInfo = await getSiteInfo(rootDir, null, context);
     if (rootSiteInfo) {
       availableSites.unshift(rootSiteInfo);
     }

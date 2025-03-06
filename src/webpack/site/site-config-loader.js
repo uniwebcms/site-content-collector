@@ -3,12 +3,11 @@ import { join } from "path";
 import yaml from "js-yaml";
 
 /**
- * Parse a module string to extract URL and version, resolving relative paths
+ * Parse a module string to extract URL and version
  * @param {string} moduleString - Module string that may contain @version
- * @param {Object} context - Context object containing basePublicUrl
- * @returns {Object} Object containing resolved url and version
+ * @returns {Object} Object containing url and version
  */
-function parseModuleString(moduleString, context) {
+function parseModuleString(moduleString) {
   const versionMatch = moduleString.match(/(.+)@(.+)/);
 
   let url, version;
@@ -19,11 +18,6 @@ function parseModuleString(moduleString, context) {
   } else {
     url = moduleString;
     version = "latest";
-  }
-
-  // Resolve relative paths if needed
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    url = resolveRelativePath(url, context);
   }
 
   return { url, version };
@@ -57,8 +51,8 @@ function resolveRelativePath(path, context) {
 function processModuleObject(moduleConfig) {
   // Extract properties from the object
   const url = moduleConfig.url || "";
-  const module = moduleConfig.module || "";
-  let version = moduleConfig.version || "latest";
+  const name = moduleConfig.name || "";
+  const version = moduleConfig.version || "latest";
 
   // Validate required fields
   if (!url) {
@@ -69,7 +63,7 @@ function processModuleObject(moduleConfig) {
 
   // Ensure URL is properly formatted
   let formattedUrl = url.endsWith("/") ? url.slice(0, -1) : url;
-  if (module) formattedUrl += "/" + module;
+  if (name) formattedUrl += "/" + name;
 
   return {
     url: formattedUrl,
@@ -86,29 +80,53 @@ async function fetchLatestVersion(baseUrl) {
   const versionUrl = `${baseUrl}/latest_version.txt`;
   console.log(`Reading latest version from ${versionUrl}`);
 
-  const response = await fetch(versionUrl);
+  try {
+    const response = await fetch(versionUrl);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch latest version: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch latest version: ${response.statusText}`);
+    }
+
+    return (await response.text()).trim();
+  } catch (error) {
+    console.error(
+      `Error fetching latest version from ${versionUrl}:`,
+      error.message
+    );
+    throw error;
   }
-
-  return (await response.text()).trim();
 }
 
+/**
+ * Process module information from either string or object format
+ * @param {string|Object} module - Module information
+ * @param {Object} context - Context object containing basePublicUrl
+ * @returns {Object} Processed module information with resolved URL and version
+ */
 function processModuleInfo(module, context) {
   if (!module) {
     throw new Error("Missing module information");
   }
 
+  let moduleInfo;
+
   if (typeof module === "string") {
-    return parseModuleString(module, context);
+    moduleInfo = parseModuleString(module);
+  } else if (typeof module === "object") {
+    moduleInfo = processModuleObject(module);
+  } else {
+    throw new Error("Module configuration must be a string or an object");
   }
 
-  if (typeof config.module === "object") {
-    return processModuleObject(module);
+  // Resolve relative paths if needed
+  if (
+    !moduleInfo.url.startsWith("http://") &&
+    !moduleInfo.url.startsWith("https://")
+  ) {
+    moduleInfo.url = resolveRelativePath(moduleInfo.url, context);
   }
 
-  throw new Error("Module configuration must be a string or an object");
+  return moduleInfo;
 }
 
 /**
@@ -124,41 +142,50 @@ function processModuleInfo(module, context) {
  * // site.yml example:
  * // module: https://uniwebcms.github.io/AcademicModules/M1@latest
  *
- * const config = await loadSiteConfig('./my-site');
- * console.log(config.components.moduleUrl);
+ * const config = await loadSiteConfig('./my-site', context);
+ * console.log(config.moduleUrl);
  * // => https://uniwebcms.github.io/AcademicModules/M1/1.0.2
  *
  * @throws {Error} If site.yml is not found
- * @throws {Error} If components configuration is invalid
+ * @throws {Error} If module configuration is invalid
  * @throws {Error} If latest version fetch fails
  */
 async function loadSiteConfig(sitePath, context) {
-  // Read and parse site.yml
-  const ymlPath = join(sitePath, "site.yml");
-
-  // Check if file exists
   try {
-    await stat(ymlPath);
+    // Read and parse site.yml
+    const ymlPath = join(sitePath, "site.yml");
+
+    // Check if file exists
+    try {
+      await stat(ymlPath);
+    } catch (error) {
+      throw new Error("site.yml not found");
+    }
+
+    const configContent = await readFile(ymlPath, "utf8");
+    const config = yaml.load(configContent);
+
+    // Process module if it exists
+    if (config.module) {
+      const moduleInfo = processModuleInfo(config.module, context);
+
+      // Fetch latest version if needed
+      if (moduleInfo.version === "latest") {
+        moduleInfo.version = await fetchLatestVersion(moduleInfo.url);
+      }
+
+      // Add the resolved module URL to the config
+      config.moduleUrl = `${moduleInfo.url}/${moduleInfo.version}`;
+
+      // Remove the original module params
+      delete config.module;
+    }
+    console.log("config", config);
+    return config;
   } catch (error) {
-    throw new Error("site.yml not found");
+    console.error("Error loading site configuration:", error.message);
+    throw error;
   }
-
-  const configContent = await readFile(ymlPath, "utf8");
-  const config = yaml.load(configContent);
-  const module = processModuleInfo(config.module);
-
-  // Fetch latest version if needed
-  if (module.version === "latest") {
-    module.version = await fetchLatestVersion(module.url);
-  }
-
-  // Add the resolved module URL to the config
-  config.moduleUrl = `${module.url}/${module.version}`;
-
-  // Remove the original module params
-  delete config.module;
-
-  return config;
 }
 
 export { loadSiteConfig };
