@@ -214,6 +214,96 @@ uniweb dev
 
 For production setups, you would create separate repositories for your content site and component library, with the site referencing the deployed component library URL in its configuration.
 
+## Enabling TypeScript Support (Optional)
+
+This project does not enforce TypeScript by default, but **TypeScript support is pre-configured** in the provided Webpack config code. If you want to use TypeScript, follow the steps below to install the necessary dependencies.
+
+### 1. Install Required Dependencies
+
+If you want to use TypeScript, install the following dependencies:
+
+```sh
+yarn add -D typescript @types/react @types/react-dom @babel/preset-typescript
+```
+
+- `typescript` → Provides TypeScript tooling (but Babel handles transpilation).
+- `@types/react` & `@types/react-dom` → Provide TypeScript support for React components.
+- `@babel/preset-typescript` → Allows Babel to strip TypeScript syntax while transpiling `.tsx` files.
+
+This setup works identically in both:
+
+- Yarn Classic Mode (node_modules)
+- Yarn Plug’n’Play (PnP) (no extra setup required).
+
+### 2. Configure TypeScript (tsconfig.jsonc)
+
+Create a `tsconfig.jsonc` file at the root of your project if you haven’t already:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ESNext", // Use the latest JavaScript features
+    "module": "ESNext", // Keep import/export statements for Webpack/Babel
+    "lib": ["DOM", "ESNext"], // Enable DOM and modern JavaScript APIs
+    "jsx": "react-jsx", // Enable JSX for React
+    "strict": true, // Enable strict mode for better type safety
+    "moduleResolution": "Node" // Resolve imports like Node.js
+  },
+  "exclude": ["node_modules", "dist"],
+  "files": ["src/_types/global.d.ts"] // Load global type definitions
+}
+```
+
+### 3. Configure VS Code for TypeScript (Optional)
+
+**If Using Yarn PnP**
+
+If you’re using Yarn PnP, run this command to enable TypeScript support in VS Code:
+
+yarn dlx @yarnpkg/sdks vscode
+
+Additionally, update .vscode/settings.json:
+
+```json
+{
+  "typescript.tsdk": ".yarn/sdks/typescript/lib"
+}
+```
+
+Then restart VS Code to apply the changes.
+
+**If Using Yarn Classic (node_modules)**
+
+No additional steps are needed—VS Code should work out of the box.
+
+### 4. Optional: Type Checking
+
+Since Babel does not check types, you may want to run TypeScript’s type checker separately:
+
+```sh
+yarn tsc --noEmit
+```
+
+This ensures that TypeScript validates your code without generating any files.
+
+### 5. Optional: Using TypeScript in Your Project
+
+Once TypeScript is enabled, you can start using it in .ts and .tsx files:
+
+```tsx
+import React from "react";
+
+interface Props {
+  name: string;
+}
+
+const Hello: React.FC<Props> = ({ name }) => {
+  return <h1>Hello, {name}!</h1>;
+};
+
+export default Hello;
+```
+
 ## 📚 Learn More
 
 Visit [uniweb.io](https://uniweb.io) or explore our [documentation](https://docs.uniweb.io).

@@ -44,7 +44,7 @@ export default function createModuleConfig(moduleInfo, context) {
 
     // Module resolution
     resolve: {
-      extensions: [".jsx", ".js", ".json"],
+      extensions: [".tsx", ".ts", ".jsx", ".js", ".json"],
       mainFiles: ["index"],
       // alias: {
       //   "@": path.join(moduleInfo.modulePath, "components"),

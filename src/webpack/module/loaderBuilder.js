@@ -36,6 +36,30 @@ function createJavaScriptLoader() {
 }
 
 /**
+ * Create TypeScript/React loader configuration
+ * @param {Object} options Loader options
+ * @returns {Object} Webpack loader configuration
+ */
+function createTypeScriptLoader() {
+  return {
+    test: /\.tsx?$/,
+    exclude: new RegExp(PATHS.NODE_MODULES),
+    use: {
+      loader: "babel-loader",
+      options: {
+        presets: [
+          "@babel/preset-env",
+          ["@babel/preset-react", { runtime: "automatic" }],
+          "@babel/preset-typescript",
+        ],
+        cacheDirectory: true,
+        cacheCompression: false,
+      },
+    },
+  };
+}
+
+/**
  * Create CSS loader configuration with optional Tailwind
  * @param {Object} moduleInfo Module information
  * @param {Object} context Build context
@@ -221,6 +245,7 @@ function getTailwindLoader(configPath) {
 export function getLoaderRules(moduleInfo, context) {
   return [
     createJavaScriptLoader(),
+    createTypeScriptLoader(),
     createCssLoader(moduleInfo, context),
     createSassLoader(context),
     createSvgLoader(),
