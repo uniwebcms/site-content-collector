@@ -74,13 +74,41 @@ function getTypeFromText(typeNode) {
 }
 
 /**
+ * Extract properties from an object literal inside `Params`
+ */
+function extractObjectProperties(typeChecker, typeNode) {
+  if (!ts.isTypeLiteralNode(typeNode)) return null;
+
+  return typeNode.members.filter(ts.isPropertySignature).map((member) => {
+    const propName = member.name.text;
+    const resolvedType = resolveType(typeChecker, member.type);
+    const propValue = resolvedType.name.replace(/^['"`]|['"`]$/g, "");
+    return [propName, propValue];
+    // return {
+    //   key: propName,
+    //   value: resolvedType.name.replace(/^['"`]|['"`]$/g, ""),
+    //   options: resolvedType.options || [],
+    //   optional: !!member.questionToken,
+    // };
+  });
+}
+
+/**
  * Resolve a referenced type (e.g., `ButtonSize` → `"small" | "medium" | "large"`).
  */
 function resolveType(typeChecker, typeNode) {
+  // Handle inline object literals
+  if (ts.isTypeLiteralNode(typeNode)) {
+    const options = extractObjectProperties(typeChecker, typeNode);
+    return { name: "object", options };
+  }
+
+  // Handle direct primitive, union, or complex types
   if (!ts.isTypeReferenceNode(typeNode)) {
     return getTypeFromText(typeNode);
   }
 
+  // Handle type references
   const symbol = typeChecker.getSymbolAtLocation(typeNode.typeName);
   if (!symbol || !symbol.declarations.length)
     return { name: typeNode.getFullText().trim() };
@@ -97,10 +125,6 @@ function resolveType(typeChecker, typeNode) {
       .map((literal) => literal.getText().replace(/['"`]/g, ""));
 
     return { name: "union", options };
-    // return declaration.type.types
-    //   .filter(ts.isLiteralTypeNode)
-    //   .map((literal) => literal.getText().replace(/['"]/g, ""))
-    //   .join(" | ");
   }
 
   // Handle `enum X { A = "a", B = "b" }`
@@ -111,12 +135,6 @@ function resolveType(typeChecker, typeNode) {
       .map((name) => name.getText().replace(/['"`]/g, ""));
 
     return { name: "enum", options };
-
-    // return declaration.members
-    //   .map((member) => member.name)
-    //   .filter((name) => ts.isIdentifier(name) || ts.isStringLiteral(name))
-    //   .map((name) => name.getText().replace(/['"]/g, ""))
-    //   .join(" | ");
   }
 
   return getTypeFromText(typeNode);
@@ -134,22 +152,6 @@ function extractParamsFromFile(filePath, program) {
   const componentParams = [];
 
   function visit(node) {
-    // if (ts.isPropertySignature(node) && node.type) {
-    //   const propName = node.name.escapedText;
-    //   const resolvedType = resolveType(typeChecker, node.type);
-    //   const propJSDoc = getJSDoc(node);
-    //   const paramInfo = {
-    //     name: propName,
-    //     type: resolvedType.name,
-    //     options: resolvedType.options,
-    //     description: propJSDoc.description,
-    //     default: propJSDoc.default,
-    //     optional: !!node.questionToken,
-    //   };
-
-    //   componentParams.push(paramInfo);
-    // }
-
     // Only process the interface named "Params"
     if (ts.isInterfaceDeclaration(node) && node.name.text === "Params") {
       node.members.forEach((member) => {
@@ -167,7 +169,7 @@ function extractParamsFromFile(filePath, program) {
             optional: !!member.questionToken,
           };
 
-          // console.log("paramInfo", paramInfo);
+          console.log("paramInfo", paramInfo);
           componentParams.push(paramInfo);
         }
       });
