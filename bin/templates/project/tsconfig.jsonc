@@ -1,0 +1,20 @@
+// If you want to use TypeScript, install the following dependencies:
+// yarn add -D typescript @types/react @types/react-dom @babel/preset-typescript
+//
+// If you’re using Yarn PnP, run this command to enable TypeScript support in VS Code:
+// yarn dlx @yarnpkg/sdks vscode
+//
+// Additionally, for Yarn PnP, update .vscode/settings.json:
+// {"typescript.tsdk": ".yarn/sdks/typescript/lib"}
+{
+  "compilerOptions": {
+    "target": "ESNext", // Use the latest JavaScript features
+    "module": "ESNext", // Keep import/export statements for Webpack/Babel
+    "lib": ["DOM", "ESNext"], // Enable DOM and modern JavaScript APIs
+    "jsx": "react-jsx", // Enable JSX for React
+    "strict": true, // Enable strict mode for better type safety
+    "moduleResolution": "Node" // Resolve imports like Node.js
+  },
+  "include": ["src"], // Only check files inside src/
+  "files": ["src/_types/global.d.ts"] // Load global type definitions
+}

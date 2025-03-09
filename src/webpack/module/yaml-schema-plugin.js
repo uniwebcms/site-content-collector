@@ -6,6 +6,7 @@ import imageSize from "image-size";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import extractParams from "./extractParams.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -87,6 +88,11 @@ export default class YamlSchemaPlugin {
   }
 
   async processComponentConfigs(srcDir, schema, compilation, isProduction) {
+    //
+    const params = extractParams(path.join(srcDir, "components"));
+    console.log("PARAMS:", params);
+    //
+
     const componentDirs = fs.readdirSync(path.join(srcDir, "components"));
     for (const componentDir of componentDirs) {
       const configPath = path.join(
