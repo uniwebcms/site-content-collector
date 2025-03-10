@@ -74,6 +74,10 @@ export default async function createWebpackConfig(
     throw new Error("Invalid root directory");
   }
 
+  const uniwebConfig = await fileUtils.loadConfig(
+    `${rootDir}/uniweb.config.js`
+  );
+
   // const { WEBPACK_SERVE = false, site = null, module = null } = argv.env || {};
   const props = argv.env || {};
   const mode = getBuildMode(argv);
@@ -82,6 +86,8 @@ export default async function createWebpackConfig(
   const env = process.env;
   const debug = true;
   const log = debug ? console.log : () => {};
+
+  log("uniwebConfig", uniwebConfig);
 
   // Prepare the base public URL such that the module's URL
   // is `${basePublicUrl}/${moduleName}/${uuid}/`

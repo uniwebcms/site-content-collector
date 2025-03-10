@@ -1,26 +1,52 @@
 import fs from "fs";
 import yaml from "js-yaml";
 
-export function readConfigFile(filename) {
+export function readConfigFile(filePath) {
   try {
-    if (fs.existsSync(filename)) {
-      const data = fs.readFileSync(filename, "utf8");
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, "utf8");
 
-      if (filename.endsWith(".json")) return JSON.parse(data);
-      if (filename.endsWith(".yml")) return yaml.load(data);
-      if (filename.endsWith(".txt")) return data;
+      if (filePath.endsWith(".json")) return JSON.parse(data);
+      if (filePath.endsWith(".yml")) return yaml.load(data);
+      if (filePath.endsWith(".txt")) return data;
     }
   } catch (error) {
     // console.warn(
-    //   `Warning: Could not parse config file ${filename}`,
+    //   `Warning: Could not parse config file ${filePath}`,
     //   error
     // );
     throw new Error(
-      `Failed to read configuration file ${filename}: ${error.message}`
+      `Failed to read configuration file ${filePath}: ${error.message}`
     );
   }
 
   return undefined;
+}
+
+/**
+ * Imports a configuration file if it exists.
+ *
+ * @async
+ * @param {string} [configPath] - Path to the configuration file
+ * @returns {Promise<object|null>} The configuration module if it exists, null otherwise
+ */
+async function loadConfig(configPath) {
+  if (!configPath.endsWith(".js")) {
+    return readConfigFile(configPath);
+  }
+
+  try {
+    // Dynamic import of the configuration module
+    const configModule = await import(configPath);
+    return configModule.default || configModule;
+  } catch (error) {
+    if (error.code === "ERR_MODULE_NOT_FOUND") {
+      console.log(`Configuration file not found: ${configPath}`);
+      return null;
+    }
+    console.error(`Error loading configuration from ${configPath}:`, error);
+    return null;
+  }
 }
 
 export function normalizeUrl(url) {
@@ -68,4 +94,10 @@ export function getDevBaseUrl(rootDir, argv, env) {
   return normalizeUrl(TUNNEL_URL);
 }
 
-export default { getDevBaseUrl, getProdBaseUrl, normalizeUrl, readConfigFile };
+export default {
+  getDevBaseUrl,
+  getProdBaseUrl,
+  normalizeUrl,
+  readConfigFile,
+  loadConfig,
+};
