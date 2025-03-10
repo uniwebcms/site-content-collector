@@ -9,7 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fileUtils from "./fileUtils.js";
 import buildUtils from "./buildUtils.js";
-import { PATHS, BUILD_MODES } from "./constants.js";
+import { PATHS, FILES, BUILD_MODES } from "./constants.js";
 import { logger } from "../logger.js";
 
 function getBuildMode(argv) {
@@ -36,46 +36,28 @@ function splitNames(names) {
  * @param {string} argv.mode - Build mode ('production' or 'development')
  * @param {number} [argv.port] - Dev server port number
  * @param {string} importMetaUrl - The import.meta.url of the webpack config file
- * @param {Array} userPlugins - Custom plugins to extend functionality. Can be instances
- *                             of CollectorPlugin for content processing or webpack plugins
- *                             for build customization.
  * @returns {Promise<object>} Webpack configuration object
- * @throws {Error} If remote module URL is not configured in site.yml
- * @throws {Error} If userPlugins is not an array
  * @throws {Error} If rootDir is invalid
  *
  * @example
  * // webpack.config.js
  * import { createConfig } from "@uniwebcms/site-content-collector";
  * import webpack from "webpack";
- * import { ImageOptimizerPlugin } from './plugins/image-optimizer';
- * import { CustomWebpackPlugin } from './plugins/webpack-plugin';
  *
- * const plugins = [
- *   new ImageOptimizerPlugin({ quality: 80 }),  // CollectorPlugin for image processing
- *   new CustomWebpackPlugin()                   // Standard webpack plugin
- * ];
- *
- * export default async (_, argv) => createConfig(webpack, argv, import.meta.url, plugins);
+ * export default async (_, argv) => createConfig(webpack, argv, import.meta.url);
  */
 export default async function createWebpackConfig(
   webpack,
   argv,
-  importMetaUrl,
-  userPlugins = []
+  importMetaUrl
 ) {
-  // Validate inputs
-  if (!Array.isArray(userPlugins)) {
-    throw new Error("userPlugins must be an array");
-  }
-
   const rootDir = path.dirname(fileURLToPath(importMetaUrl));
   if (!rootDir) {
     throw new Error("Invalid root directory");
   }
 
-  const uniwebConfig = await fileUtils.loadConfig(
-    `${rootDir}/uniweb.config.js`
+  const options = await fileUtils.loadConfig(
+    path.join(rootDir, FILES.PROJECT_CONFIG)
   );
 
   // const { WEBPACK_SERVE = false, site = null, module = null } = argv.env || {};
@@ -86,8 +68,14 @@ export default async function createWebpackConfig(
   const env = process.env;
   const debug = true;
   const log = debug ? console.log : () => {};
+  const userPlugins = options.plugins ?? [];
 
-  log("uniwebConfig", uniwebConfig);
+  // Validate inputs
+  if (!Array.isArray(userPlugins)) {
+    throw new Error("Project `plugins` must be an array");
+  }
+
+  log("Options:", options);
 
   // Prepare the base public URL such that the module's URL
   // is `${basePublicUrl}/${moduleName}/${uuid}/`

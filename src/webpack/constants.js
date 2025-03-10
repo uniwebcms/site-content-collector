@@ -44,6 +44,7 @@ export const FILES = {
   REMOTE_ENTRY: "remoteEntry.js",
   MODULE_CONFIG: "module.yml",
   SITE_CONFIG: "site.yml",
+  PROJECT_CONFIG: "uniweb.config.js",
 };
 
 // Webpack Specific
