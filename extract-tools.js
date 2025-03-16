@@ -45,7 +45,47 @@ for (const file of files) {
         return param.initializer.getText().replace(/^["']|["']$/g, ""); // Remove surrounding quotes if string
       }
     }
-    return null;
+    return undefined;
+  }
+
+  function extractDefaultValueFromJSDoc(tag, paramName) {
+    if (!tag) return undefined;
+
+    const tagText = tag.getFullText();
+
+    // First try to find exact pattern [paramName=
+    let pattern = "[" + paramName + "=";
+    let startIdx = tagText.indexOf(pattern);
+
+    // If not found, try with whitespace after paramName
+    if (startIdx === -1) {
+      pattern = "[" + paramName + " ";
+      startIdx = tagText.indexOf(pattern);
+
+      if (startIdx !== -1) {
+        // Check if there's an equals sign after the whitespace
+        const equalsIdx = tagText.indexOf("=", startIdx + pattern.length);
+        if (equalsIdx === -1 || tagText.indexOf("]", startIdx) < equalsIdx) {
+          // No equals sign before closing bracket, so no default value
+          startIdx = -1;
+        } else {
+          // Found equals sign, adjust valueStartIdx accordingly
+          pattern = "=";
+          startIdx = equalsIdx;
+        }
+      }
+    }
+
+    if (startIdx !== -1) {
+      const valueStartIdx = startIdx + pattern.length;
+      const valueEndIdx = tagText.indexOf("]", valueStartIdx);
+
+      if (valueEndIdx !== -1) {
+        return tagText.substring(valueStartIdx, valueEndIdx).trim();
+      }
+    }
+
+    return undefined;
   }
 
   function visit(node) {
@@ -76,13 +116,13 @@ for (const file of files) {
               );
               const isOptional = tag.isBracketed; // Directly check if TypeScript marked it optional
 
-              // If TypeScript parsed a default value, use it.
-              let defaultValue = tag.typeExpression?.default
-                ? tag.typeExpression.default.getText()
-                : null;
+              // Try to extract default value from JSDoc
+              let defaultValue = isOptional
+                ? extractDefaultValueFromJSDoc(tag, paramName)
+                : undefined;
 
-              // If TypeScript didn't extract the default, check the function signature.
-              if (!defaultValue) {
+              // If no default value in JSDoc, check function signature
+              if (defaultValue === undefined) {
                 defaultValue = extractDefaultValueFromSignature(
                   node,
                   paramName
@@ -93,8 +133,8 @@ for (const file of files) {
                 name: paramName,
                 type: paramType,
                 description: paramDesc,
-                optional: isOptional || !!defaultValue, // Mark optional if a default exists
-                defaultValue: defaultValue,
+                optional: isOptional || defaultValue !== undefined, // Mark optional if a default exists
+                defaultValue,
               });
             } else if (ts.isJSDocTag(tag) && tag.tagName.text === "example") {
               examples.push(tag.comment ? tag.comment.trim() : "");
