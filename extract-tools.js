@@ -32,11 +32,20 @@ for (const file of files) {
   );
 
   function cleanType(typeStr) {
-    return typeStr.replace(/[{}]/g, "").trim(); // Remove curly braces
+    return typeStr.replace(/[{}?]/g, "").trim(); // Remove `{}`, `?`
   }
 
   function cleanDescription(desc) {
     return desc ? desc.replace(/^- /, "").trim() : ""; // Remove leading "- "
+  }
+
+  function extractDefaultValueFromSignature(node, paramName) {
+    for (const param of node.parameters) {
+      if (param.name.getText() === paramName && param.initializer) {
+        return param.initializer.getText().replace(/^["']|["']$/g, ""); // Remove surrounding quotes if string
+      }
+    }
+    return null;
   }
 
   function visit(node) {
@@ -58,24 +67,33 @@ for (const file of files) {
           // Extract tags
           for (const tag of comment.tags || []) {
             if (ts.isJSDocParameterTag(tag)) {
-              const paramName = tag.name.getText();
-              const paramType = tag.typeExpression
-                ? cleanType(tag.typeExpression.getText())
-                : "any";
-              const paramDesc = cleanDescription(
+              const paramName = tag.name.getText(); // TypeScript already removes brackets
+              const paramType = cleanType(
+                tag.typeExpression ? tag.typeExpression.getText() : "any"
+              );
+              let paramDesc = cleanDescription(
                 tag.comment ? tag.comment.trim() : ""
               );
-              const isOptional = tag.isBracketed;
-              const defaultValue =
-                tag.comment && tag.comment.includes("Default: ")
-                  ? tag.comment.split("Default: ")[1].split(/\s+/)[0]
-                  : null;
+              const isOptional = tag.isBracketed; // Directly check if TypeScript marked it optional
+
+              // If TypeScript parsed a default value, use it.
+              let defaultValue = tag.typeExpression?.default
+                ? tag.typeExpression.default.getText()
+                : null;
+
+              // If TypeScript didn't extract the default, check the function signature.
+              if (!defaultValue) {
+                defaultValue = extractDefaultValueFromSignature(
+                  node,
+                  paramName
+                );
+              }
 
               params.push({
                 name: paramName,
                 type: paramType,
                 description: paramDesc,
-                optional: isOptional,
+                optional: isOptional || !!defaultValue, // Mark optional if a default exists
                 defaultValue: defaultValue,
               });
             } else if (ts.isJSDocTag(tag) && tag.tagName.text === "example") {
@@ -108,4 +126,4 @@ fs.writeFileSync(METADATA_FILE, JSON.stringify(toolRegistry, null, 2));
 // Write index.js file to export all tools
 fs.writeFileSync(INDEX_FILE, toolExports.join("\n"));
 
-console.log("✅ Tools extracted and cleaned successfully!");
+console.log("✅ Tools extracted with correct optional & default values!");
