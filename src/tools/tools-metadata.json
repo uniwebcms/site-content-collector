@@ -1,0 +1,46 @@
+[
+  {
+    "module": "math",
+    "name": "add",
+    "description": "Adds two numbers together.",
+    "params": [
+      {
+        "name": "a",
+        "type": "number|string",
+        "description": "The first number.",
+        "optional": true,
+        "defaultValue": "\"5\""
+      },
+      {
+        "name": "b",
+        "type": "number?",
+        "description": "The second number.",
+        "optional": true,
+        "defaultValue": "100"
+      }
+    ],
+    "examples": [
+      "add(5, 5)"
+    ]
+  },
+  {
+    "module": "math",
+    "name": "multiply",
+    "description": "Multiplies two numbers.",
+    "params": [
+      {
+        "name": "a",
+        "type": "number",
+        "description": "The first number.",
+        "optional": false
+      },
+      {
+        "name": "b",
+        "type": "number",
+        "description": "The second number.",
+        "optional": false
+      }
+    ],
+    "examples": []
+  }
+]

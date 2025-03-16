@@ -32,7 +32,19 @@ for (const file of files) {
   );
 
   function cleanType(typeStr) {
-    return typeStr.replace(/[{}?]/g, "").trim(); // Remove `{}`, `?`
+    if (!typeStr) return "any";
+
+    // Remove curly braces but preserve other important syntax
+    let cleaned = typeStr.replace(/[{}]/g, "");
+
+    // Handle union types by normalizing spaces around pipe (|)
+    cleaned = cleaned
+      .replace(/\s*\|\s*/g, "|") // Normalize space around union type separator
+      .replace(/\(\s*(.*?)\s*\)/g, "$1") // Remove unnecessary parentheses
+      .replace(/\s+/g, " ") // Convert multiple spaces to single space
+      .trim(); // Remove leading/trailing spaces
+
+    return cleaned;
   }
 
   function cleanDescription(desc) {
@@ -40,8 +52,14 @@ for (const file of files) {
   }
 
   function extractDefaultValueFromSignature(node, paramName) {
+    if (!node || !node.parameters) return undefined;
+
     for (const param of node.parameters) {
-      if (param.name.getText() === paramName && param.initializer) {
+      if (
+        param.name &&
+        param.name.getText() === paramName &&
+        param.initializer
+      ) {
         return param.initializer.getText().replace(/^["']|["']$/g, ""); // Remove surrounding quotes if string
       }
     }
@@ -53,39 +71,21 @@ for (const file of files) {
 
     const tagText = tag.getFullText();
 
-    // First try to find exact pattern [paramName=
-    let pattern = "[" + paramName + "=";
-    let startIdx = tagText.indexOf(pattern);
+    // Escape special regex characters in paramName
+    const escapedParamName = paramName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // If not found, try with whitespace after paramName
-    if (startIdx === -1) {
-      pattern = "[" + paramName + " ";
-      startIdx = tagText.indexOf(pattern);
+    // More comprehensive regex pattern to handle various whitespace scenarios
+    // This matches [paramName=value] or [paramName = value] with any amount of whitespace
+    const defaultValueRegex = new RegExp(
+      `\\[\\s*${escapedParamName}\\s*=\\s*([^\\]]+?)\\s*\\]`
+    );
+    const match = tagText.match(defaultValueRegex);
 
-      if (startIdx !== -1) {
-        // Check if there's an equals sign after the whitespace
-        const equalsIdx = tagText.indexOf("=", startIdx + pattern.length);
-        if (equalsIdx === -1 || tagText.indexOf("]", startIdx) < equalsIdx) {
-          // No equals sign before closing bracket, so no default value
-          startIdx = -1;
-        } else {
-          // Found equals sign, adjust valueStartIdx accordingly
-          pattern = "=";
-          startIdx = equalsIdx;
-        }
-      }
+    if (match && match[1]) {
+      return match[1].trim();
     }
 
-    if (startIdx !== -1) {
-      const valueStartIdx = startIdx + pattern.length;
-      const valueEndIdx = tagText.indexOf("]", valueStartIdx);
-
-      if (valueEndIdx !== -1) {
-        return tagText.substring(valueStartIdx, valueEndIdx).trim();
-      }
-    }
-
-    return undefined;
+    return undefined; // No default value found
   }
 
   function visit(node) {
@@ -106,7 +106,7 @@ for (const file of files) {
 
           // Extract tags
           for (const tag of comment.tags || []) {
-            if (ts.isJSDocParameterTag(tag)) {
+            if (ts.isJSDocParameterTag(tag) && tag.name) {
               const paramName = tag.name.getText(); // TypeScript already removes brackets
               const paramType = cleanType(
                 tag.typeExpression ? tag.typeExpression.getText() : "any"
