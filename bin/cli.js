@@ -19,7 +19,7 @@ async function setupCLI() {
     .version(packageData.version || "1.0.0");
 
   // console.dir(toolHandler.getCLICommands(), { depth: 3 });
-  toolHandler.registerCommands(program);
+  toolHandler.registerCommands(program, chalk);
 
   return program;
 }
