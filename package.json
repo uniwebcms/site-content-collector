@@ -18,6 +18,7 @@
     "test-report": "node --experimental-vm-modules node_modules/jest/bin/jest.js --json > test-results.json 2>&1"
   },
   "dependencies": {
+    "@uniwebcms/dev-tools": "file:../dev-tools",
     "@uniwebcms/content-reader": "^1.0.3",
     "chalk": "^5.4.1",
     "commander": "^11.1.0",
