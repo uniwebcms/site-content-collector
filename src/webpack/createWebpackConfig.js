@@ -75,8 +75,6 @@ export default async function createWebpackConfig(
     throw new Error("Project `plugins` must be an array");
   }
 
-  log("Options:", options);
-
   // Prepare the base public URL such that the module's URL
   // is `${basePublicUrl}/${moduleName}/${uuid}/`
   const basePublicUrl = isProduction
@@ -84,7 +82,7 @@ export default async function createWebpackConfig(
     : fileUtils.getDevBaseUrl(rootDir, argv, env);
 
   const targetSites = splitNames(
-    props.site ?? props.sites ?? env.TARGET_SITE ?? ""
+    props.site ?? props.sites ?? env.TARGET_SITE ?? "*"
   );
 
   const targetModules = splitNames(
@@ -114,7 +112,7 @@ export default async function createWebpackConfig(
   logger.info(`Building in ${mode} mode...`);
   logger.group();
 
-  logger.info(`argv`, argv);
+  // logger.info(`argv`, argv);
 
   try {
     // Get the array of module configs (synchronous)
@@ -122,7 +120,7 @@ export default async function createWebpackConfig(
 
     // Wait for the site configs (async)
     const siteConfigs = await buildUtils.buildSiteConfigs(context);
-
+    console.log({ siteConfigs });
     // Create the combined config array
     let configs = [...moduleConfigs, ...siteConfigs];
 

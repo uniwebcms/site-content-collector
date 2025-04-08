@@ -3,6 +3,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import CopyPlugin from "copy-webpack-plugin";
 import { SiteContentPlugin } from "./site-content-plugin.js";
 import { CollectorPlugin } from "../../core/plugin.js";
+// import VirtualEntryPlugin from "./virtual-entry-plugin.js";
 
 /**
  * Generates a webpack configuration object with predefined settings and plugins.
@@ -38,9 +39,14 @@ async function createSiteConfig(siteInfo, context) {
     );
   }
 
+  const entryPath = "./" + join(relSitePath, "engine/index.js");
+
+  // const entryPath = "./" + join(relSitePath, "engine/virtual-entry.js");
+  // const entryCode = `import("./bootstrap.js");`;
+
   return {
     mode,
-    entry: "./" + join(relSitePath, "src/index.js"), //siteInfo.entryPath,
+    entry: entryPath,
     output: {
       path: siteInfo.outputPath, // absolute, with suffix: `${uuid}` or `${uuid}_${kind}`
       publicPath: siteInfo.publicUrl, // with suffix `/${module}/${uuid}/`
@@ -128,6 +134,7 @@ async function createSiteConfig(siteInfo, context) {
       ],
     },
     plugins: [
+      // new VirtualEntryPlugin(entryPath, entryCode),
       // Generate HTML file and inject bundles
       new HtmlWebpackPlugin({
         template: "./" + join(relSitePath, "public/index.html"), //"./public/index.html",

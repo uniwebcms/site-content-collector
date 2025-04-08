@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-// import packageData from "../package.json" assert { type: "json" };
 import { getPackageData } from "./utils/package.js";
 
 import { ToolHandler } from "@uniwebcms/dev-tools";
@@ -16,10 +15,12 @@ async function setupCLI() {
     .description(
       "Uniweb development toolkit for managing sites, modules and components"
     )
-    .version(packageData.version || "1.0.0");
+    .version(packageData.version || "1.0.0")
+    .option("--verbose", "enable verbose output")
+    .option("--debug", "enable debug mode");
 
   // console.dir(toolHandler.getCLICommands(), { depth: 3 });
-  toolHandler.registerCommands(program, chalk);
+  toolHandler.registerCommands(program, packageData, chalk);
 
   return program;
 }
