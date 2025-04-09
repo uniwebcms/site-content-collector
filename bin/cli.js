@@ -10,14 +10,18 @@ async function setupCLI() {
   const program = new Command();
   const toolHandler = new ToolHandler();
 
-  program
-    .name("uniweb")
-    .description(
-      "Uniweb development toolkit for managing sites, modules and components"
-    )
-    .version(packageData.version || "1.0.0")
-    .option("--verbose", "enable verbose output")
-    .option("--debug", "enable debug mode");
+  packageData.name = "uniweb";
+  packageData.description =
+    "Toolkit for managing sites, modules and components";
+
+  // program
+  //   .name("uniweb")
+  //   .description(
+  //     "Uniweb development toolkit for managing sites, modules and components"
+  //   )
+  //   .version(packageData.version || "1.0.0")
+  //   .option("--verbose", "enable verbose output")
+  //   .option("--debug", "enable debug mode");
 
   // console.dir(toolHandler.getCLICommands(), { depth: 3 });
   toolHandler.registerCommands(program, packageData, chalk);
