@@ -1,6 +1,7 @@
 import { readFile, stat } from "fs/promises";
 import { join } from "path";
 import yaml from "js-yaml";
+import { logger } from "@uniwebcms/dev-tools";
 
 /**
  * Parse a module string to extract URL and version
@@ -180,10 +181,10 @@ async function loadSiteConfig(sitePath, context) {
       // Remove the original module params
       delete config.module;
     }
-    console.log("config", config);
+    logger.verbose({ ymlPath, config });
     return config;
   } catch (error) {
-    console.error("Error loading site configuration:", error.message);
+    logger.error("Error loading site configuration:", error.message);
     throw error;
   }
 }

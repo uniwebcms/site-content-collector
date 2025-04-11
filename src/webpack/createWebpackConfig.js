@@ -120,7 +120,7 @@ export default async function createWebpackConfig(
 
     // Wait for the site configs (async)
     const siteConfigs = await buildUtils.buildSiteConfigs(context);
-    console.log({ siteConfigs });
+
     // Create the combined config array
     let configs = [...moduleConfigs, ...siteConfigs];
 
