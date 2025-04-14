@@ -169,7 +169,7 @@ function extractParamsFromFile(filePath, program) {
             optional: !!member.questionToken,
           };
 
-          console.log("paramInfo", paramInfo);
+          // console.log("paramInfo", paramInfo);
           componentParams.push(paramInfo);
         }
       });
@@ -190,7 +190,7 @@ function extractParamsFromFile(filePath, program) {
  */
 export default function extractAllParams(srcDir) {
   const paramFiles = findParamsFiles(srcDir);
-  console.log("FILES", paramFiles);
+  // console.log("FILES", paramFiles);
   if (paramFiles.length === 0) {
     console.log("⚠️ No `params.ts` files found. Skipping extraction.");
     return;

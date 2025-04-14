@@ -86,7 +86,7 @@ export default async function createWebpackConfig(
   );
 
   const targetModules = splitNames(
-    props.module ?? props.modules ?? env.TARGET_MODULE ?? ""
+    props.module ?? props.modules ?? env.TARGET_MODULE ?? "*"
   );
 
   // Setup build context

@@ -90,7 +90,7 @@ export default class YamlSchemaPlugin {
   async processComponentConfigs(srcDir, schema, compilation, isProduction) {
     //
     const params = extractParams(path.join(srcDir, "components"));
-    console.log("PARAMS:", params);
+    // console.log("PARAMS:", params);
     //
 
     const componentDirs = fs.readdirSync(path.join(srcDir, "components"));
