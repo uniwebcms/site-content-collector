@@ -49,20 +49,26 @@ function resolveLocalModule(moduleInfo, context) {
   moduleInfo = { ...moduleInfo, url: `${baseUrl}/${route}` };
 
   if (moduleInfo.version === "latest") {
-    const localPath = join(context.buildDevDir, route, "latest_version.txt");
-    moduleInfo.version = readLatestVersion(localPath) || "latest";
+    const buildPath = join(context.buildDevDir, route, "latest_version.txt");
+    const srcPath = join(context.rootDir, "src", route, "package.json");
+
+    moduleInfo.version =
+      readLatestVersion(buildPath) ||
+      readLatestVersion(srcPath, true)?.version ||
+      "latest";
   }
 
   return moduleInfo;
 }
 
-function readLatestVersion(filePath) {
+function readLatestVersion(filePath, parse = false) {
   if (!existsSync(filePath)) {
     return null;
   }
 
   try {
-    return readFileSync(filePath, "utf8").trim();
+    const content = readFileSync(filePath, "utf8").trim();
+    return parse ? JSON.parse(content) : content;
   } catch (error) {
     console.error(`Error reading file: ${error.message}`);
     return null;
