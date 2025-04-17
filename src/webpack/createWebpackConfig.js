@@ -118,6 +118,9 @@ export default async function createWebpackConfig(
     // Get the array of module configs (synchronous)
     const moduleConfigs = buildUtils.buildModuleConfigs(context);
 
+    // Extract just the names into a new array
+    context.activeModules = moduleConfigs.map((config) => config.name);
+
     // Wait for the site configs (async)
     const siteConfigs = await buildUtils.buildSiteConfigs(context);
 

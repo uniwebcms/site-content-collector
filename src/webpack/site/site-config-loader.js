@@ -49,13 +49,13 @@ function resolveLocalModule(moduleInfo, context) {
   moduleInfo = { ...moduleInfo, url: `${baseUrl}/${route}` };
 
   if (moduleInfo.version === "latest") {
-    const buildPath = join(context.buildDevDir, route, "latest_version.txt");
-    const srcPath = join(context.rootDir, "src", route, "package.json");
-
-    moduleInfo.version =
-      readLatestVersion(buildPath) ||
-      readLatestVersion(srcPath, true)?.version ||
-      "latest";
+    if (context.activeModules.includes(route)) {
+      const srcPath = join(context.rootDir, "src", route, "package.json");
+      moduleInfo.version = readLatestVersion(srcPath, true)?.version;
+    } else {
+      const buildPath = join(context.buildDevDir, route, "latest_version.txt");
+      moduleInfo.version = readLatestVersion(buildPath) || "latest";
+    }
   }
 
   return moduleInfo;
