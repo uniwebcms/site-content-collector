@@ -1,4 +1,5 @@
 import { readFile, stat } from "fs/promises";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import yaml from "js-yaml";
 import { logger } from "@uniwebcms/dev-tools";
@@ -30,7 +31,7 @@ function parseModuleString(moduleString) {
  * @param {Object} context - Context object containing basePublicUrl
  * @returns {string} Fully qualified URL
  */
-function resolveRelativePath(path, context) {
+function resolveLocalModule(moduleInfo, context) {
   if (!context || !context.basePublicUrl) {
     throw new Error(
       "Invalid module configuration: unable to resolve relative path"
@@ -41,7 +42,31 @@ function resolveRelativePath(path, context) {
     ? context.basePublicUrl.slice(0, -1)
     : context.basePublicUrl;
 
-  return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+  let route = moduleInfo.url;
+  if (route.startsWith("/")) route = route.slice(1);
+
+  // Clone the module info and modify it
+  moduleInfo = { ...moduleInfo, url: `${baseUrl}/${route}` };
+
+  if (moduleInfo.version === "latest") {
+    const localPath = join(context.buildDevDir, route, "latest_version.txt");
+    moduleInfo.version = readLatestVersion(localPath) || "latest";
+  }
+
+  return moduleInfo;
+}
+
+function readLatestVersion(filePath) {
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  try {
+    return readFileSync(filePath, "utf8").trim();
+  } catch (error) {
+    console.error(`Error reading file: ${error.message}`);
+    return null;
+  }
 }
 
 /**
@@ -124,7 +149,7 @@ function processModuleInfo(module, context) {
     !moduleInfo.url.startsWith("http://") &&
     !moduleInfo.url.startsWith("https://")
   ) {
-    moduleInfo.url = resolveRelativePath(moduleInfo.url, context);
+    moduleInfo = resolveLocalModule(moduleInfo, context);
   }
 
   return moduleInfo;
