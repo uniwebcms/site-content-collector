@@ -11,6 +11,8 @@
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import * as sass from "sass";
 import { BUILD_MODES, EXTENSIONS, PATHS } from "../constants.js";
+import { createRequire } from "module";
+import fileUtils from "../fileUtils.js";
 
 /**
  * Create JavaScript/React loader configuration
@@ -66,9 +68,9 @@ function createTypeScriptLoader() {
  * @returns {Object} Webpack loader configuration
  */
 function createCssLoader(moduleInfo, context) {
-  const { tailwindConfig } = moduleInfo;
   const { isProduction } = context;
 
+  // Base loaders
   const loaders = [
     isProduction ? MiniCssExtractPlugin.loader : "style-loader",
     {
@@ -87,15 +89,11 @@ function createCssLoader(moduleInfo, context) {
       loader: "postcss-loader",
       options: {
         postcssOptions: {
-          plugins: ["postcss-preset-env", "autoprefixer"],
+          plugins: getPostCSSPlugins(moduleInfo),
         },
       },
     },
   ];
-
-  if (tailwindConfig) {
-    loaders.push(getTailwindLoader(tailwindConfig));
-  }
 
   return {
     test: /\.css$/,
@@ -104,11 +102,14 @@ function createCssLoader(moduleInfo, context) {
 }
 
 /**
- * Create SASS loader configuration
- * @param {Object} options Loader options
+ * Create SASS loader configuration with optional Tailwind support
+ * @param {Object} moduleInfo Module information
+ * @param {Object} context Build context
  * @returns {Object} Webpack loader configuration
  */
-function createSassLoader({ isProduction }) {
+function createSassLoader(moduleInfo, context) {
+  const { isProduction } = context;
+
   return {
     test: /\.s[ac]ss$/i,
     use: [
@@ -129,7 +130,7 @@ function createSassLoader({ isProduction }) {
         loader: "postcss-loader",
         options: {
           postcssOptions: {
-            plugins: ["postcss-preset-env", "autoprefixer"],
+            plugins: getPostCSSPlugins(moduleInfo),
           },
         },
       },
@@ -226,28 +227,93 @@ function createRawLoader() {
 }
 
 /**
- * Get Tailwind loader configuration
- * @param {string} configPath Path to Tailwind config
- * @returns {Object} Tailwind loader configuration
+ * Makes an array of PostCSS plugins configured for the module
+ *
+ * @param {Object} moduleInfo - Module configuration information
+ * @param {string} [moduleInfo.tailwindConfig] - Direct path to tailwind config file
+ * @param {Array<Object>} [moduleInfo.tailwindConfigs=[]] - Array of tailwind config objects
+ * @param {string} moduleInfo.tailwindConfigs[].path - Path to tailwind config file
+ * @returns {Array<(string|[string, Object])>} Array of PostCSS plugins - either as string identifiers
+ *                                            or [pluginName, pluginConfig] tuples
  */
-function getTailwindLoader(configPath) {
+function getPostCSSPlugins(moduleInfo) {
+  const require = createRequire(import.meta.url);
+
+  // PostCSS plugins can be strings (for plugins with default config)
+  // or [pluginName, pluginOptions] tuples
+  const plugins = ["postcss-preset-env", "autoprefixer"];
+  const { tailwindConfig, tailwindConfigs = [] } = moduleInfo;
+  console.log({ moduleInfo });
+  // Determine which tailwind config to use
+  const configPath =
+    tailwindConfig ||
+    (tailwindConfigs.length > 0 ? tailwindConfigs[0].path : null);
+
+  // Include Tailwind CSS plugin when configuration is available
+  if (configPath) {
+    try {
+      const tailwindConfig = fileUtils.loadConfig(configPath);
+      console.log({ tailwindConfig });
+      // plugins.push(["tailwindcss", tailwindConfig]);
+      // plugins.push(["tailwindcss", configPath]);
+      plugins.push(["tailwindcss", getDefaultTailwindConfig(moduleInfo)]);
+    } catch (error) {
+      console.warn(
+        `Failed to load Tailwind config at ${configPath}:`,
+        error.message
+      );
+      // Could add a fallback here if needed
+    }
+  }
+
+  // console.log({ plugins });
+
+  return plugins;
+}
+
+function getDefaultTailwindConfig(moduleInfo) {
   return {
-    loader: "tailwind-loader",
-    options: { config: configPath },
+    // content: ["./src/**/*.{js,jsx}"],
+    // content: [`${moduleInfo.modulePath}/components/**/*.{js,jsx,ts,tsx}`],
+    content: [`./src/${moduleInfo.name}/components/**/*.{js,jsx,ts,tsx}`],
+    theme: {
+      extend: {
+        spacing: {
+          "8xl": "96rem",
+          "9xl": "108rem",
+        },
+        colors: {
+          // Add your custom colors here
+          // "custom-blue": "#1da1f2",
+        },
+      },
+    },
+    plugins: [
+      // Add any plugins you need
+      // Note: You'll need to import them at the top of the file
+    ],
   };
 }
 
 /**
  * Get all loader rules for webpack configuration
- * @param {Object} options Configuration options
+ * @param {Object} moduleInfo Module information
+ * @param {Object} context Build context
  * @returns {Array} Array of webpack loader rules
  */
 export function getLoaderRules(moduleInfo, context) {
   return [
+    // Add this rule before any other rule to support missing `index.js` in imports
+    {
+      test: /\.m?js$/,
+      resolve: {
+        fullySpecified: false,
+      },
+    },
     createJavaScriptLoader(),
     createTypeScriptLoader(),
     createCssLoader(moduleInfo, context),
-    createSassLoader(context),
+    createSassLoader(moduleInfo, context),
     createSvgLoader(),
     createImageLoader(),
     createFontLoader(),
@@ -258,13 +324,4 @@ export function getLoaderRules(moduleInfo, context) {
 
 export default {
   getLoaderRules,
-  // createJavaScriptLoader,
-  // createCssLoader,
-  // createSassLoader,
-  // createSvgLoader,
-  // createImageLoader,
-  // createFontLoader,
-  // createMdxLoader,
-  // createRawLoader,
-  // getTailwindLoader,
 };

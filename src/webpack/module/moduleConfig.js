@@ -26,6 +26,7 @@ export default function createModuleConfig(moduleInfo, context) {
   moduleUtils.refreshDynamicExports(moduleInfo);
 
   logger.warn("publicUrl", moduleInfo.publicUrl);
+  logger.warn("moduleInfo", moduleInfo);
 
   return {
     name: variant ? `${moduleName}-${variant}` : moduleName,

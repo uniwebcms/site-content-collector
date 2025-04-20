@@ -198,7 +198,7 @@ function refreshDynamicExports(moduleInfo) {
   newContent += exportedComponents
     .map(
       (component) =>
-        `export { default as ${component} } from './components/${component}';`
+        `export { default as ${component} } from './components/${component}/index.js';`
     )
     .join("\n");
 
