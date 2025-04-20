@@ -11,8 +11,7 @@
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import * as sass from "sass";
 import { BUILD_MODES, EXTENSIONS, PATHS } from "../constants.js";
-import { createRequire } from "module";
-import fileUtils from "../fileUtils.js";
+// import { createRequire } from "module";
 
 /**
  * Create JavaScript/React loader configuration
@@ -237,13 +236,13 @@ function createRawLoader() {
  *                                            or [pluginName, pluginConfig] tuples
  */
 function getPostCSSPlugins(moduleInfo) {
-  const require = createRequire(import.meta.url);
+  // const require = createRequire(import.meta.url);
 
   // PostCSS plugins can be strings (for plugins with default config)
   // or [pluginName, pluginOptions] tuples
   const plugins = ["postcss-preset-env", "autoprefixer"];
   const { tailwindConfig, tailwindConfigs = [] } = moduleInfo;
-  console.log({ moduleInfo });
+  // console.log({ moduleInfo });
   // Determine which tailwind config to use
   const configPath =
     tailwindConfig ||
@@ -252,8 +251,7 @@ function getPostCSSPlugins(moduleInfo) {
   // Include Tailwind CSS plugin when configuration is available
   if (configPath) {
     try {
-      const tailwindConfig = fileUtils.loadConfig(configPath);
-      console.log({ tailwindConfig });
+      // const tailwindConfig = await fileUtils.loadConfig(configPath);
       // plugins.push(["tailwindcss", tailwindConfig]);
       // plugins.push(["tailwindcss", configPath]);
       plugins.push(["tailwindcss", getDefaultTailwindConfig(moduleInfo)]);

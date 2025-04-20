@@ -2,6 +2,7 @@ import path from "path";
 import pluginBuilder from "./pluginBuilder.js";
 import loaderBuilder from "./loaderBuilder.js";
 import moduleUtils from "./moduleUtils.js";
+import fileUtils from "../fileUtils.js";
 import { getBuildOptimizations } from "./optimizationBuilder.js";
 // import { getDevServerConfig } from "./devServerBuilder.js";
 
@@ -10,7 +11,7 @@ import { getBuildOptimizations } from "./optimizationBuilder.js";
  * @param {Object} params Build parameters
  * @returns {Object} Webpack configuration
  */
-export default function createModuleConfig(moduleInfo, context) {
+export default async function createModuleConfig(moduleInfo, context) {
   const { variant, buildId: uuid } = moduleInfo;
   const { isProduction, logger } = context;
   const moduleName = moduleInfo.name;
@@ -27,6 +28,10 @@ export default function createModuleConfig(moduleInfo, context) {
 
   logger.warn("publicUrl", moduleInfo.publicUrl);
   logger.warn("moduleInfo", moduleInfo);
+
+  const twConfigPath = path.join(moduleInfo.modulePath, "tailwind.config.js");
+  const tailwindConfig = await fileUtils.loadConfig(twConfigPath);
+  console.log({ tailwindConfig });
 
   return {
     name: variant ? `${moduleName}-${variant}` : moduleName,
