@@ -18,8 +18,13 @@ function buildModuleVariantConfig(moduleInfo, context) {
 
   // Clone the module info because it will be extended as it's processed
   // Create configurations for each Tailwind variant (or single config if no variants)
-  if (moduleInfo.tailwindConfigs.length <= 1)
-    return createModuleConfig({ ...moduleInfo, buildId }, context);
+  if (moduleInfo.tailwindConfigs.length <= 1) {
+    const tailwindConfigName = moduleInfo.tailwindConfigs[0]?.path;
+    return createModuleConfig(
+      { ...moduleInfo, buildId, tailwindConfigName },
+      context
+    );
+  }
 
   return moduleInfo.tailwindConfigs.map(({ path, kind }) =>
     createModuleConfig({
@@ -27,7 +32,7 @@ function buildModuleVariantConfig(moduleInfo, context) {
         ...moduleInfo,
         buildId,
         variant,
-        tailwindConfig: path,
+        tailwindConfigName: path,
         variant: kind,
       },
       context,

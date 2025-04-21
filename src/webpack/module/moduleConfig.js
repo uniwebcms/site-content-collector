@@ -3,7 +3,7 @@ import pluginBuilder from "./pluginBuilder.js";
 import loaderBuilder from "./loaderBuilder.js";
 import moduleUtils from "./moduleUtils.js";
 import fileUtils from "../fileUtils.js";
-import { getBuildOptimizations } from "./optimizationBuilder.js";
+// import { getBuildOptimizations } from "./optimizationBuilder.js";
 // import { getDevServerConfig } from "./devServerBuilder.js";
 
 /**
@@ -29,9 +29,7 @@ export default async function createModuleConfig(moduleInfo, context) {
   logger.warn("publicUrl", moduleInfo.publicUrl);
   logger.warn("moduleInfo", moduleInfo);
 
-  const twConfigPath = path.join(moduleInfo.modulePath, "tailwind.config.js");
-  const tailwindConfig = await fileUtils.loadConfig(twConfigPath);
-  console.log({ tailwindConfig });
+  moduleInfo.tailwindConfig = await getTailwindConfig(moduleInfo);
 
   return {
     name: variant ? `${moduleName}-${variant}` : moduleName,
@@ -80,4 +78,38 @@ export default async function createModuleConfig(moduleInfo, context) {
     // Build reporting
     stats: isProduction ? "normal" : "minimal",
   };
+}
+
+function getDefaultTailwindConfig(moduleInfo) {
+  return {
+    // content: ["./src/**/*.{js,jsx}"],
+    // content: [`${moduleInfo.modulePath}/components/**/*.{js,jsx,ts,tsx}`],
+    content: [`./src/${moduleInfo.name}/components/**/*.{js,jsx,ts,tsx}`],
+    theme: {
+      extend: {
+        spacing: {
+          "8xl": "96rem",
+          "9xl": "108rem",
+        },
+        colors: {
+          // Add your custom colors here
+          // "custom-blue": "#1da1f2",
+        },
+      },
+    },
+    plugins: [
+      // Add any plugins you need
+      // Note: You'll need to import them at the top of the file
+    ],
+  };
+}
+
+async function getTailwindConfig(moduleInfo) {
+  const { tailwindConfigName = "tailwind.config.js" } = moduleInfo;
+
+  const twConfigPath = path.join(moduleInfo.modulePath, tailwindConfigName);
+  const tailwindConfig = await fileUtils.loadConfig(twConfigPath);
+  console.log({ tailwindConfig });
+
+  return tailwindConfig;
 }

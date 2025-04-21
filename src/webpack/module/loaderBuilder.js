@@ -236,61 +236,13 @@ function createRawLoader() {
  *                                            or [pluginName, pluginConfig] tuples
  */
 function getPostCSSPlugins(moduleInfo) {
-  // const require = createRequire(import.meta.url);
-
   // PostCSS plugins can be strings (for plugins with default config)
   // or [pluginName, pluginOptions] tuples
   const plugins = ["postcss-preset-env", "autoprefixer"];
-  const { tailwindConfig, tailwindConfigs = [] } = moduleInfo;
-  // console.log({ moduleInfo });
-  // Determine which tailwind config to use
-  const configPath =
-    tailwindConfig ||
-    (tailwindConfigs.length > 0 ? tailwindConfigs[0].path : null);
-
-  // Include Tailwind CSS plugin when configuration is available
-  if (configPath) {
-    try {
-      // const tailwindConfig = await fileUtils.loadConfig(configPath);
-      // plugins.push(["tailwindcss", tailwindConfig]);
-      // plugins.push(["tailwindcss", configPath]);
-      plugins.push(["tailwindcss", getDefaultTailwindConfig(moduleInfo)]);
-    } catch (error) {
-      console.warn(
-        `Failed to load Tailwind config at ${configPath}:`,
-        error.message
-      );
-      // Could add a fallback here if needed
-    }
+  if (moduleInfo.tailwindConfig) {
+    plugins.push(["tailwindcss", moduleInfo.tailwindConfig]);
   }
-
-  // console.log({ plugins });
-
   return plugins;
-}
-
-function getDefaultTailwindConfig(moduleInfo) {
-  return {
-    // content: ["./src/**/*.{js,jsx}"],
-    // content: [`${moduleInfo.modulePath}/components/**/*.{js,jsx,ts,tsx}`],
-    content: [`./src/${moduleInfo.name}/components/**/*.{js,jsx,ts,tsx}`],
-    theme: {
-      extend: {
-        spacing: {
-          "8xl": "96rem",
-          "9xl": "108rem",
-        },
-        colors: {
-          // Add your custom colors here
-          // "custom-blue": "#1da1f2",
-        },
-      },
-    },
-    plugins: [
-      // Add any plugins you need
-      // Note: You'll need to import them at the top of the file
-    ],
-  };
 }
 
 /**
