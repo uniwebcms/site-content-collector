@@ -32,6 +32,8 @@ function parseModuleString(moduleString) {
  * @returns {string} Fully qualified URL
  */
 function resolveLocalModule(moduleInfo, context) {
+  logger.warn(`Resolving local module ${moduleInfo.url}`);
+
   if (!context || !context.basePublicUrl) {
     throw new Error(
       "Invalid module configuration: unable to resolve relative path"
@@ -110,7 +112,7 @@ function processModuleObject(moduleConfig) {
  */
 async function fetchLatestVersion(baseUrl) {
   const versionUrl = `${baseUrl}/latest_version.txt`;
-  console.log(`Reading latest version from ${versionUrl}`);
+  logger.info(`Reading latest module version from ${versionUrl}`);
 
   try {
     const response = await fetch(versionUrl);
@@ -175,7 +177,7 @@ function processModuleInfo(module, context) {
  * // module: https://uniwebcms.github.io/AcademicModules/M1@latest
  *
  * const config = await loadSiteConfig('./my-site', context);
- * console.log(config.moduleUrl);
+ *
  * // => https://uniwebcms.github.io/AcademicModules/M1/1.0.2
  *
  * @throws {Error} If site.yml is not found

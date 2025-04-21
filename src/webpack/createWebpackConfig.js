@@ -8,6 +8,7 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import fileUtils from "./fileUtils.js";
+import moduleUtils from "./module/moduleUtils.js";
 import buildUtils from "./buildUtils.js";
 import { PATHS, FILES, BUILD_MODES } from "./constants.js";
 import { logger } from "../logger.js";
@@ -115,11 +116,14 @@ export default async function createWebpackConfig(
   // logger.info(`argv`, argv);
 
   try {
-    // Get the array of module configs (synchronous)
-    const moduleConfigs = buildUtils.buildModuleConfigs(context);
+    // Determine which modules to build
+    const modules = moduleUtils.getModulesToBuild(context);
 
-    // Extract just the names into a new array
-    context.activeModules = moduleConfigs.map((config) => config.name);
+    // Get the array of module configs (synchronous)
+    const moduleConfigs = buildUtils.buildModuleConfigs(modules, context);
+
+    // Tell the site builder which modules are being built
+    context.activeModules = modules.map((config) => config.name);
 
     // Wait for the site configs (async)
     const siteConfigs = await buildUtils.buildSiteConfigs(context);

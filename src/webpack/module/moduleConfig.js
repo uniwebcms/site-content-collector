@@ -26,8 +26,8 @@ export default async function createModuleConfig(moduleInfo, context) {
   // Make sure that the `dynamicExports.js` file of the module is up to date
   moduleUtils.refreshDynamicExports(moduleInfo);
 
-  logger.warn("publicUrl", moduleInfo.publicUrl);
-  logger.warn("moduleInfo", moduleInfo);
+  // logger.warn("publicUrl", moduleInfo.publicUrl);
+  // logger.warn("moduleInfo", moduleInfo);
 
   moduleInfo.tailwindConfig = await getTailwindConfig(moduleInfo);
 
@@ -110,6 +110,9 @@ async function getTailwindConfig(moduleInfo) {
   const twConfigPath = path.join(moduleInfo.modulePath, tailwindConfigName);
   const tailwindConfig = await fileUtils.loadConfig(twConfigPath);
   console.log({ tailwindConfig });
+
+  // const mainConfig = getDefaultTailwindConfig(moduleInfo);
+  // tailwindConfig.content = mainConfig.content;
 
   return tailwindConfig;
 }

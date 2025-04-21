@@ -102,7 +102,11 @@ export function findTailwindConfigFiles(moduleDir) {
     .map((file) => {
       const match = file.match(PATTERNS.TAILWIND_CONFIG);
       return match
-        ? { path: path.resolve(moduleDir, file), kind: match[1] || "" }
+        ? {
+            name: file,
+            // path: path.resolve(moduleDir, file),
+            kind: match[1] || "",
+          }
         : null;
     })
     .filter(Boolean);

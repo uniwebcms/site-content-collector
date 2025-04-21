@@ -1,5 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
-import moduleUtils from "./module/moduleUtils.js";
+// import { v4 as uuidv4 } from "uuid";
 import siteUtils from "./site/siteUtils.js";
 import createModuleConfig from "./module/moduleConfig.js";
 import createSiteConfig from "./site/siteConfig.js";
@@ -19,20 +18,20 @@ function buildModuleVariantConfig(moduleInfo, context) {
   // Clone the module info because it will be extended as it's processed
   // Create configurations for each Tailwind variant (or single config if no variants)
   if (moduleInfo.tailwindConfigs.length <= 1) {
-    const tailwindConfigName = moduleInfo.tailwindConfigs[0]?.path;
+    const tailwindConfigName = moduleInfo.tailwindConfigs[0]?.name;
     return createModuleConfig(
       { ...moduleInfo, buildId, tailwindConfigName },
       context
     );
   }
 
-  return moduleInfo.tailwindConfigs.map(({ path, kind }) =>
+  return moduleInfo.tailwindConfigs.map(({ name, kind }) =>
     createModuleConfig({
       moduleInfo: {
         ...moduleInfo,
         buildId,
         variant,
-        tailwindConfigName: path,
+        tailwindConfigName: name,
         variant: kind,
       },
       context,
@@ -40,13 +39,13 @@ function buildModuleVariantConfig(moduleInfo, context) {
   );
 }
 
-function buildModuleConfigs(context) {
-  // const targetModule = env.TARGET_MODULE ?? env.TARGET_MODULES ?? "*";
-
-  // Determine which modules to build
-  const modules = moduleUtils.getModulesToBuild(context);
-
-  // Build configurations for modules
+/**
+ * Build configuration promises for each module
+ * @param {Array} modules - The modules to build
+ * @param {Object} context - The current build context
+ * @returns {Array<Promise>} Array of promises for config objects.
+ */
+function buildModuleConfigs(modules, context) {
   return modules.flatMap((moduleInfo) =>
     buildModuleVariantConfig(moduleInfo, context)
   );
