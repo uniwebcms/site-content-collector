@@ -109,7 +109,7 @@ async function getTailwindConfig(moduleInfo) {
 
   const twConfigPath = path.join(moduleInfo.modulePath, tailwindConfigName);
   const tailwindConfig = await fileUtils.loadConfig(twConfigPath);
-  console.log({ tailwindConfig });
+  // console.log({ tailwindConfig });
 
   // const mainConfig = getDefaultTailwindConfig(moduleInfo);
   // tailwindConfig.content = mainConfig.content;
