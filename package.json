@@ -18,8 +18,8 @@
     "test-report": "node --experimental-vm-modules node_modules/jest/bin/jest.js --json > test-results.json 2>&1"
   },
   "dependencies": {
-    "@uniwebcms/dev-tools": "file:../dev-tools",
     "@uniwebcms/content-reader": "^1.0.3",
+    "@uniwebcms/dev-tools": "file:../dev-tools",
     "chalk": "^5.4.1",
     "commander": "^11.1.0",
     "handlebars": "^4.7.8",
@@ -27,7 +27,8 @@
     "inquirer": "^12.4.2",
     "js-yaml": "^4.1.0",
     "ora": "^8.2.0",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "table": "^6.9.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

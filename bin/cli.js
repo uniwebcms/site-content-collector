@@ -4,35 +4,40 @@ import { getPackageData } from "./utils/package.js";
 
 import { ToolHandler } from "@uniwebcms/dev-tools";
 import chalk from "chalk";
+import { table } from "table";
 
-async function setupCLI() {
+try {
   const packageData = await getPackageData();
+  packageData.name = "uniweb";
+  packageData.description = "Manager for sites and modules";
+
   const program = new Command();
   const toolHandler = new ToolHandler();
-
-  packageData.name = "uniweb";
-  packageData.description =
-    "Toolkit for managing sites, modules and components";
-
-  // program
-  //   .name("uniweb")
-  //   .description(
-  //     "Uniweb development toolkit for managing sites, modules and components"
-  //   )
-  //   .version(packageData.version || "1.0.0")
-  //   .option("--verbose", "enable verbose output")
-  //   .option("--debug", "enable debug mode");
-
-  // console.dir(toolHandler.getCLICommands(), { depth: 3 });
-  toolHandler.registerCommands(program, packageData, chalk);
-
-  return program;
+  toolHandler.registerCommands(program, packageData, { chalk, table });
+  program.parse(); // Run the CLI
+} catch (error) {
+  console.error("Fatal error:", error);
+  process.exit(1);
 }
 
-// Run the CLI
-setupCLI()
-  .then((program) => program.parse())
-  .catch((error) => {
-    console.error("Fatal error:", error);
-    process.exit(1);
-  });
+// async function setupCLI() {
+//   const packageData = await getPackageData();
+//   const program = new Command();
+//   const toolHandler = new ToolHandler();
+
+//   packageData.name = "uniweb";
+//   packageData.description =
+//     "Toolkit for managing sites, modules and components";
+
+//   toolHandler.registerCommands(program, packageData, chalk);
+
+//   return program;
+// }
+
+// // Run the CLI
+// setupCLI()
+//   .then((program) => program.parse())
+//   .catch((error) => {
+//     console.error("Fatal error:", error);
+//     process.exit(1);
+//   });
