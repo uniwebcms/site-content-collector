@@ -11,6 +11,7 @@ try {
     name: "uniweb",
     description: "Manager for sites and modules",
     version: packageData.version,
+    peerDependencies: packageData.peerDependencies,
   };
 
   const program = new Command();
