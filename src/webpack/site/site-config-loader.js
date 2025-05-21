@@ -51,6 +51,7 @@ function resolveLocalModule(moduleInfo, context) {
   moduleInfo = { ...moduleInfo, url: `${baseUrl}/${route}` };
 
   if (moduleInfo.version === "latest") {
+    logger.warn(`Active modules: ${context.activeModules.join(", ")}`);
     if (context.activeModules.includes(route)) {
       const srcPath = join(context.rootDir, "src", route, "package.json");
       moduleInfo.version = readLatestVersion(srcPath, true)?.version;
@@ -70,6 +71,7 @@ function readLatestVersion(filePath, parse = false) {
 
   try {
     const content = readFileSync(filePath, "utf8").trim();
+    // logger.warn(`Reading module version from ${filePath}: ${content}`);
     return parse ? JSON.parse(content) : content;
   } catch (error) {
     console.error(`Error reading file: ${error.message}`);

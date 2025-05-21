@@ -6,9 +6,10 @@
  */
 
 import path from "path";
-import fs from "fs";
+import fs from "fs/promises";
+import { existsSync, readdirSync } from "fs";
 import { PATHS, FILES, PATTERNS, ERRORS, EXTENSIONS } from "../constants.js";
-import { readConfigFile } from "../fileUtils.js";
+import fileUtils from "../fileUtils.js";
 
 // /**
 //  * Find all valid module folders in the src directory
@@ -32,15 +33,14 @@ import { readConfigFile } from "../fileUtils.js";
  */
 function findModules(srcDir) {
   // console.log("srcDir", srcDir);
-  if (!fs.existsSync(srcDir)) return [];
+  if (!existsSync(srcDir)) return [];
 
-  return fs
-    .readdirSync(srcDir, { withFileTypes: true })
+  return readdirSync(srcDir, { withFileTypes: true })
     .filter(
       (dirent) =>
         dirent.isDirectory() &&
         PATTERNS.VALID_MODULE_NAME.test(dirent.name) &&
-        fs.existsSync(path.join(srcDir, dirent.name, "module.yml"))
+        existsSync(path.join(srcDir, dirent.name, "package.json")) //
     )
     .map((dirent) => getModuleInfo(srcDir, dirent.name))
     .filter(Boolean);
@@ -58,18 +58,20 @@ export function getModuleInfo(srcDir, moduleName) {
   const moduleConfigPath = path.join(modulePath, FILES.MODULE_CONFIG);
 
   // Read package.json and module.yml
-  const packageJson = readConfigFile(packageJsonPath); // ?? { dependencies: {} };
-  const moduleConfig = readConfigFile(moduleConfigPath);
+  const packageJson = fileUtils.readConfigFile(packageJsonPath); // ?? { dependencies: {} };
+  if (!packageJson) return null;
 
-  if (!packageJson || !moduleConfig) return null;
+  const moduleConfig = fileUtils.readConfigFile(moduleConfigPath);
+
+  // if (!packageJson || !moduleConfig) return null;
 
   // Find entry point (supports both .js and .jsx)
   const jsEntry = path.join(modulePath, `${FILES.ENTRY}.js`);
   const jsxEntry = path.join(modulePath, `${FILES.ENTRY}.jsx`);
 
-  const entryPath = fs.existsSync(jsEntry)
+  const entryPath = existsSync(jsEntry)
     ? jsEntry
-    : fs.existsSync(jsxEntry)
+    : existsSync(jsxEntry)
     ? jsxEntry
     : null;
 
@@ -85,7 +87,7 @@ export function getModuleInfo(srcDir, moduleName) {
     entryPath,
     tailwindConfigs,
     exposes,
-    // hasPackageJson: fs.existsSync(packageJsonPath),
+    // hasPackageJson: existsSync(packageJsonPath),
   };
 }
 
@@ -95,7 +97,7 @@ export function getModuleInfo(srcDir, moduleName) {
  * @returns {Array<{path: string, kind: string}>} Array of config paths and their variants
  */
 export function findTailwindConfigFiles(moduleDir) {
-  const configFiles = fs.readdirSync(moduleDir);
+  const configFiles = readdirSync(moduleDir);
 
   return configFiles
     .filter((file) => PATTERNS.TAILWIND_CONFIG.test(file))
@@ -120,10 +122,10 @@ export function findTailwindConfigFiles(moduleDir) {
 //  */
 // export function getExposedComponents(modulePath, prefix = "") {
 //   const componentsPath = path.join(modulePath, PATHS.COMPONENTS);
-//   if (!fs.existsSync(componentsPath)) return {};
+//   if (!existsSync(componentsPath)) return {};
 
 //   const components = {};
-//   fs.readdirSync(componentsPath)
+//   readdirSync(componentsPath)
 //     .filter((file) => EXTENSIONS.JAVASCRIPT.some((ext) => file.endsWith(ext)))
 //     .forEach((file) => {
 //       const componentName = file.replace(/\.[^.]+$/, "");
@@ -160,7 +162,7 @@ function getModuleFederationExposes(srcDir, moduleName) {
 // export function validateModule(srcDir, moduleName) {
 //   const moduleInfo = getModuleInfo(srcDir, moduleName);
 
-//   if (!fs.existsSync(moduleInfo.modulePath)) {
+//   if (!existsSync(moduleInfo.modulePath)) {
 //     throw new Error(`${ERRORS.INVALID_MODULE} ${moduleName}`);
 //   }
 
@@ -169,36 +171,53 @@ function getModuleFederationExposes(srcDir, moduleName) {
 //   }
 // }
 
-function refreshDynamicExports(moduleInfo) {
+async function refreshDynamicExports(moduleInfo) {
   const { modulePath } = moduleInfo;
   const componentsDir = path.join(modulePath, "components");
   const outputFile = path.join(modulePath, "dynamicExports.js");
-  const exportedComponents = [];
 
   // Read all component directories
-  const componentDirs = fs.readdirSync(componentsDir);
+  const componentDirs = await fs.readdir(componentsDir);
 
-  componentDirs.forEach((componentDir) => {
-    const absDir = path.join(componentsDir, componentDir);
-    const indexPath = path.join(absDir, "index.js");
-    const configPath = path.join(absDir, "meta", "config.yml");
+  // Process component directories in parallel
+  const results = await Promise.all(
+    componentDirs.map(async (componentDir) => {
+      const absDir = path.join(componentsDir, componentDir);
+      const indexPath = path.join(absDir, "index.js");
+      const configPath = path.join(absDir, "component.config.js");
 
-    if (fs.existsSync(indexPath) && fs.existsSync(configPath)) {
-      try {
-        const config = readConfigFile(configPath);
-        if (config && config.export !== false) {
-          exportedComponents.push(componentDir);
+      // Check if both files exist
+      const [indexExists, configExists] = await Promise.all([
+        fs
+          .access(indexPath)
+          .then(() => true)
+          .catch(() => false),
+        fs
+          .access(configPath)
+          .then(() => true)
+          .catch(() => false),
+      ]);
+
+      if (indexExists && configExists) {
+        try {
+          const config = await fileUtils.loadConfig(configPath);
+          if (config && config.export !== false) {
+            return componentDir;
+          }
+        } catch (error) {
+          console.error(`Error processing config for ${componentDir}:`, error);
         }
-      } catch (error) {
-        console.error(`Error processing config for ${componentDir}:`, error);
       }
-    }
-  });
+      return null;
+    })
+  );
+
+  // Filter out null values and collect exported components
+  const exportedComponents = results.filter(Boolean);
 
   // Generate the content for dynamicExports.js
   let newContent = `// WARNING: This file is auto-generated. DO NOT EDIT MANUALLY.\n`;
 
-  // Generate the content for dynamicExports.js
   newContent += exportedComponents
     .map(
       (component) =>
@@ -207,13 +226,11 @@ function refreshDynamicExports(moduleInfo) {
     .join("\n");
 
   // Check if the file exists and read its content
-  const oldContent = fs.existsSync(outputFile)
-    ? fs.readFileSync(outputFile, "utf8")
-    : "";
+  const oldContent = await fs.readFile(outputFile, "utf8").catch(() => "");
 
   // Write the content to the output file
   if (newContent !== oldContent) {
-    fs.writeFileSync(outputFile, newContent);
+    await fs.writeFile(outputFile, newContent);
     console.log(
       `${exportedComponents.length} exported components for ${moduleInfo.name}.`
     );
@@ -225,7 +242,7 @@ function refreshDynamicExports(moduleInfo) {
 //     generateModuleExports(srcDir, moduleDir);
 //   } else {
 //     // Read all module directories
-//     fs.readdirSync(srcDir).forEach((moduleDir) => {
+//     readdirSync(srcDir).forEach((moduleDir) => {
 //       generateModuleExports(srcDir, moduleDir);
 //     });
 //   }

@@ -57,7 +57,7 @@ export default class YamlSchemaPlugin {
             compilation.compiler.options.mode === "production";
 
           try {
-            this.processModuleConfig(srcDir, schema);
+            await this.processModuleConfig(srcDir, schema);
             await this.processComponentConfigs(
               srcDir,
               schema,
@@ -78,7 +78,7 @@ export default class YamlSchemaPlugin {
     });
   }
 
-  processModuleConfig(srcDir, schema) {
+  async processModuleConfig(srcDir, schema) {
     const moduleConfigPath = path.join(srcDir, "config.yml");
     if (fs.existsSync(moduleConfigPath)) {
       const moduleConfig = yaml.load(fs.readFileSync(moduleConfigPath, "utf8"));

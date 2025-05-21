@@ -60,7 +60,7 @@ export default async function createWebpackConfig(
   const options = await fileUtils.loadConfig(
     path.join(rootDir, FILES.PROJECT_CONFIG)
   );
-
+  console.log("env", argv.env);
   // const { WEBPACK_SERVE = false, site = null, module = null } = argv.env || {};
   const props = argv.env || {};
   const mode = getBuildMode(argv);
@@ -118,7 +118,7 @@ export default async function createWebpackConfig(
   try {
     // Determine which modules to build
     const modules = moduleUtils.getModulesToBuild(context);
-
+    // console.log({ modules });
     // Get the array of module configs (synchronous)
     const moduleConfigs = buildUtils.buildModuleConfigs(modules, context);
 

@@ -24,7 +24,7 @@ export default async function createModuleConfig(moduleInfo, context) {
     (variant ? `_${variant}` : "");
 
   // Make sure that the `dynamicExports.js` file of the module is up to date
-  moduleUtils.refreshDynamicExports(moduleInfo);
+  await moduleUtils.refreshDynamicExports(moduleInfo);
 
   // logger.warn("publicUrl", moduleInfo.publicUrl);
   // logger.warn("moduleInfo", moduleInfo);

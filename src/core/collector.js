@@ -3,6 +3,7 @@ import { readFile, readdir, stat } from "node:fs/promises";
 import { join, parse } from "node:path";
 import yaml from "js-yaml";
 import { markdownToProseMirror } from "@uniwebcms/content-reader";
+import { Project, Site, Page, Section } from "@uniwebcms/dev-tools";
 import { PluginRegistry } from "./plugin.js";
 import {
   readYamlFile,
@@ -66,9 +67,14 @@ export class ContentCollector {
   }
 
   async #processRoot(rootPath) {
-    const siteConfig = await readYamlFile(join(rootPath, "site.yml"));
-    const themeConfig = await readYamlFile(join(rootPath, "theme.yml"));
-    const contentPath = join(rootPath, "pages"); // get relative contentPath instead?
+    const project = new Project(rootPath);
+    const site = new Site("/", project);
+    // const siteConfig = await readYamlFile(join(rootPath, "site.yml"));
+    // const themeConfig = await readYamlFile(join(rootPath, "theme.yml"));
+    // const contentPath = join(rootPath, "pages"); // get relative contentPath instead?
+    const siteConfig = await site.loadConfig();
+    const themeConfig = await site.loadTheme();
+    const contentPath = site.pagesDir;
 
     const output = {
       pages: [],
@@ -87,18 +93,21 @@ export class ContentCollector {
     // Process each directory as a potential page
     await Promise.all(
       entries.map(async (entry) => {
-        const path = join(contentPath, entry);
-        const isDir = await stat(path).then((stats) => stats.isDirectory());
-
-        if (!isDir) return;
+        // const path = join(contentPath, entry);
+        // const isDir = await stat(path).then((stats) => stats.isDirectory());
+        // if (!isDir) return;
 
         try {
-          const page = await this.#processPage(path, entry);
-          if (page.hidden) return;
+          // const config = await page.loadConfig();
+          // const page = await this.#processPage(path, entry);
+          const page = await this.#processPage(entry, site);
+          if (!page) return;
+
           const suffix = page.route.startsWith("/@") && page.route.slice(2);
           if (suffix && specials.includes(suffix)) output[suffix] = page;
           else output.pages.push(page);
         } catch (err) {
+          console.log("PAGE PROCESS ERROR", err.message);
           this.#context.errors.push({
             page: entry,
             message: err.message,
@@ -112,50 +121,75 @@ export class ContentCollector {
     return output;
   }
 
-  async #processPage(pagePath, dirName) {
-    this.#context.currentFile = pagePath;
+  async #processPage(relPagePath, site) {
+    const page = new Page(relPagePath, site);
 
-    // Get directory contents and page metadata
-    const [files, pageMetadata] = await Promise.all([
-      readdir(pagePath),
-      readYamlFile(join(pagePath, "page.yml")),
-    ]);
+    if (!(await page.exists())) return null;
+
+    this.#context.currentFile = page.dirPath;
+
+    let { sections, hidden, ...pageMetadata } = await page.loadConfig();
+
+    if (hidden) return null;
+    // const files = await readdir(page.dirPath); //pagePath
+
+    if (!sections || !Array.isArray(sections) || !sections.length) {
+      const files = await readdir(page.dirPath);
+      sections = files.filter(isMarkdownFile).sort(compareFilenames);
+    }
+
+    sections = page.initSections(sections);
+
+    // // Get directory contents and page metadata
+    // const [files, pageMetadata] = await Promise.all([
+    //   readdir(pagePath),
+    //   readYamlFile(join(pagePath, "page.yml")),
+    // ]);
+
+    // // Process each markdown file as a section
+    // const sections = await Promise.all(
+    //   files
+    //     .filter(isMarkdownFile)
+    //     .sort(compareFilenames)
+    //     .map((file) => this.#processSection(file, page)) //join(pagePath, file)
+    // );
 
     // Process each markdown file as a section
-    const sections = await Promise.all(
-      files
-        .filter(isMarkdownFile)
-        .sort(compareFilenames)
-        .map((file) => this.#processSection(join(pagePath, file)))
+    sections = await Promise.all(
+      sections.map((section) => this.#processSection(section))
     );
 
+    // console.log({ sections });
+
     // Filter out null sections and build hierarchy
-    const validSections = sections.filter(Boolean);
-    const hierarchy = this.#buildSectionHierarchy(validSections);
+    // const validSections = sections.filter(Boolean);
+    // const hierarchy = this.#buildSectionHierarchy(validSections);
 
     // Check for subpages
-    const subpages = await this.#processSubpages(pagePath);
+    const subpages = await this.#processSubpages(page);
 
     return {
-      route: "/" + dirName,
+      route: "/" + page.route,
       ...pageMetadata,
-      sections: hierarchy,
+      sections,
+      // sections: hierarchy,
       ...(subpages.length > 0 && { subpages }),
     };
   }
 
-  async #processSubpages(pagePath) {
-    const entries = await readdir(pagePath);
+  async #processSubpages(parentPage) {
+    const entries = await readdir(parentPage.dirPath);
     const subpages = [];
 
     for (const entry of entries) {
-      const path = join(pagePath, entry);
-      const stats = await stat(path);
+      const pagePath = join(parentPage.dirPath, entry);
+      const stats = await stat(pagePath);
 
       if (stats.isDirectory()) {
         try {
-          const subpage = await this.#processPage(path, entry);
-          if (!subpage.hidden) subpages.push(subpage);
+          const relPath = join(parentPage.path, entry);
+          const subpage = await this.#processPage(relPath, parentPage.site);
+          if (subpage) subpages.push(subpage);
         } catch (err) {
           this.#context.errors.push({
             page: entry,
@@ -170,22 +204,23 @@ export class ContentCollector {
     return subpages;
   }
 
-  async #processSection(filePath) {
-    const { name } = parse(filePath);
-    const { prefix, name: baseName } = parseNumericPrefix(name);
+  async #processSection(section) {
+    // const section = new Section(filePath, page);
+    // const { name } = parse(filePath);
+    // const { prefix, name: baseName } = parseNumericPrefix(name);
 
-    // Skip files without numeric prefix if required by config
-    if (this.#context.config.requireNumericPrefix && !prefix) {
-      return null;
-    }
+    // // Skip files without numeric prefix if required by config
+    // if (this.#context.config.requireNumericPrefix && !prefix) {
+    //   return null;
+    // }
 
-    // Skip files that start with "_"
-    if (name.startsWith("_")) {
-      return null;
-    }
+    // // Skip files that start with "_"
+    // if (name.startsWith("_")) {
+    //   return null;
+    // }
 
     try {
-      const content = await readFile(filePath, "utf8");
+      const content = await readFile(section.filePath, "utf8");
       const processed = await this.#processMarkdown(content);
 
       // Run content through processor plugins
@@ -193,30 +228,31 @@ export class ContentCollector {
         if (plugin.processContent) {
           processed.content = await plugin.processContent(processed.content, {
             ...this.#context,
-            currentSection: filePath,
+            currentSection: section.filePath,
           });
         }
       }
 
+      const subsections = await Promise.all(
+        section.subsections.map((child) => this.#processSection(child))
+      );
+
       return {
-        id: prefix || baseName,
-        title: baseName,
+        id: section.name,
+        // title: baseName,
         ...processed,
-        subsections: [],
+        subsections,
       };
     } catch (err) {
-      throw createError(`Failed to process section ${name}`, {
+      throw createError(`Failed to process section ${section.name}`, {
         cause: err,
-        path: filePath,
+        path: section.filePath,
       });
     }
   }
 
   async #processMarkdown(content) {
-    let component = null;
-    let config = null;
-    let props = {};
-    let input = null;
+    let frontMatter = {};
     let markdown = content;
 
     // Process front matter if present
@@ -224,11 +260,7 @@ export class ContentCollector {
       const parts = content.split("---\n");
       if (parts.length >= 3) {
         try {
-          const frontMatter = yaml.load(parts[1]);
-          component = frontMatter?.component || null;
-          config = frontMatter?.config || null;
-          props = frontMatter?.props || {};
-          input = frontMatter?.input || null;
+          frontMatter = yaml.load(parts[1]) || {};
           markdown = parts.slice(2).join("---\n");
         } catch (err) {
           throw createError("Invalid front matter", { cause: err });
@@ -236,13 +268,14 @@ export class ContentCollector {
       }
     }
 
+    let { component, preset, input, ...params } = frontMatter;
+
     // Load input data if specified
     if (input) {
       for (const plugin of this.#plugins.getOrderedPlugins()) {
         if (plugin.loadData) {
           try {
-            const data = await plugin.loadData(input, this.#context);
-            if (data) props.input = data;
+            input = await plugin.loadData(input, this.#context);
           } catch (err) {
             throw createError("Failed to load input data", { cause: err });
           }
@@ -255,8 +288,9 @@ export class ContentCollector {
 
     return {
       component,
-      config,
-      props,
+      preset,
+      input,
+      params,
       content: proseMirrorContent,
     };
   }

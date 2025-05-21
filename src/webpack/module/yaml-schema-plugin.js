@@ -7,6 +7,7 @@ import sharp from "sharp";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import extractParams from "./extractParams.js";
+import fileUtils from "../fileUtils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -58,7 +59,7 @@ export default class YamlSchemaPlugin {
             compilation.compiler.options.mode === "production";
 
           try {
-            this.processModuleConfig(srcDir, schema);
+            await this.processModuleConfig(srcDir, schema);
             await this.processComponentConfigs(
               srcDir,
               schema,
@@ -79,11 +80,12 @@ export default class YamlSchemaPlugin {
     });
   }
 
-  processModuleConfig(srcDir, schema) {
-    const moduleConfigPath = path.join(srcDir, "config.yml");
+  async processModuleConfig(srcDir, schema) {
+    const moduleConfigPath = path.join(srcDir, "component.config.js"); //"config.yml"
     if (fs.existsSync(moduleConfigPath)) {
-      const moduleConfig = yaml.load(fs.readFileSync(moduleConfigPath, "utf8"));
-      schema._self = moduleConfig;
+      // const moduleConfig = yaml.load(fs.readFileSync(moduleConfigPath, "utf8"));
+      // schema._self = moduleConfig;
+      schema._self = await fileUtils.loadConfig(moduleConfigPath);
     }
   }
 
